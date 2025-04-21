@@ -21,8 +21,7 @@ docker-compose.yml
 
 # Database
 *.sqlite3
-mariadb_data/
-/mariadb/
+/db/
 *.db
 
 # Logs e temporários

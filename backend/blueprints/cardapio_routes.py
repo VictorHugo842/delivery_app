@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify
 
-client_bp = Blueprint('client', __name__, url_prefix='/client')
+cardapio_bp = Blueprint('cardapio', __name__, url_prefix='/cardapio')
 
 # Simulação de "banco de dados"
 lojas = {
@@ -14,7 +14,7 @@ lojas = {
     }
 }
 
-@client_bp.route('/<slug>', methods=['GET'])
+@cardapio_bp.route('/<slug>', methods=['GET'])
 def get_loja_by_slug(slug):
     loja = lojas.get(slug)
     if not loja:
@@ -25,9 +25,9 @@ def get_loja_by_slug(slug):
         "menu": loja["menu"]
     })
 
-@client_bp.route('/')
+@cardapio_bp.route('/')
 def index():
     return jsonify({
         "message": "API is running!",
-        "people": ["FRONT-END CLIENT", "FRONT-END CLIENT"],
+        "people": ["FRONT-END cardapio", "FRONT-END cardapio"],
     })

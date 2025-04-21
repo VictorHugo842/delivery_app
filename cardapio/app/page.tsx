@@ -9,7 +9,7 @@ function Home() {
 
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/cardapio`)
       .then((response) => response.json())
       .then((data) => {
         console.log('API response:', data);

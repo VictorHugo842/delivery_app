@@ -8,9 +8,9 @@ export default function Delivery() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchAdminDashboard() {
+    async function fetchPainelDashboard() {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/delivery`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/painel/delivery`);
         
         if (!response.ok) {
           throw new Error(`Erro ao buscar os dados: ${response.status}`);
@@ -24,7 +24,7 @@ export default function Delivery() {
       }
     }
 
-    fetchAdminDashboard();
+    fetchPainelDashboard();
   }, []);
 
   if (loading) {

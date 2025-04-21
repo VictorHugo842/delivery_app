@@ -12,7 +12,7 @@ export default function LojaPage() {
   useEffect(() => {
     async function fetchLojaData() {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/client/${slug}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cardapio/${slug}`);
         if (!res.ok) {
           throw new Error("Loja não encontrada");
         }
