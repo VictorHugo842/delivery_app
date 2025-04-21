@@ -9,7 +9,7 @@ function Home() {
 
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/client`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin`)
       .then((response) => response.json())
       .then((data) => {
         console.log('API response:', data);
