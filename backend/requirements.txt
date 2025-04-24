@@ -11,3 +11,4 @@ gunicorn
 axios
 Flask-Migrate
 python-slugify
+Flask-Limiter

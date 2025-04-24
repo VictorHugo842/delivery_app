@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 from extensions import db
 import json
 import os
-
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 # Importar os Blueprints
 from blueprints.cardapio_routes import cardapio_bp
@@ -17,6 +18,8 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+
+limiter = Limiter(get_remote_address, app=app)
 
 # Load environment variables
 DB_HOST = os.getenv("DB_HOST")

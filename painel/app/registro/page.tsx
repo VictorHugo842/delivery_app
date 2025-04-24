@@ -20,37 +20,44 @@ export default function PaginaRegistro() {
         defaultValues: {
             nomeUsuario: '',
             email: '',
+            documento: '',
+            integrarWhatsapp: false,
+            telefoneWhatsappBusiness: '',
             telefone: '',
             nomeLoja: '',
             tipoEstabelecimento: '',
             faturamentoMensal: '',
             senha: '',
             confirmarSenha: '',
-            opcoesSelecionadas: [] as string[]
+            modoOperacao: [] as string[]
         },
     });
+    const integrarWhatsapp = watch('integrarWhatsapp');
 
     const camposValidos = [
         "nomeUsuario",
         "email",
+        "documento",
         "telefone",
+        "telefoneWhatsappBusiness",
         "nomeLoja",
+        "integrarWhatsapp",
         "tipoEstabelecimento",
         "faturamentoMensal",
         "senha",
         "confirmarSenha",
-        "opcoesSelecionadas" // Adicionado aqui
+        "modoOperacao"
     ] as const;
 
     type CamposValidos = typeof camposValidos[number];
 
     const handleProximo = async () => {
         let camposParaValidar: CamposValidos[] = [];
-
+        // VALIDAÇÕES PARA TELEFONE BUSINESS, SE TIVER CHECKADO, DEVE SER OBRIGATÓRI
         if (step === 1) {
-            camposParaValidar = ["nomeUsuario", "email", "telefone"];
+            camposParaValidar = ["nomeUsuario", "email", "telefone", "documento"];
         } else if (step === 2) {
-            camposParaValidar = ["nomeLoja", "tipoEstabelecimento", "faturamentoMensal", "opcoesSelecionadas"];
+            camposParaValidar = ["nomeLoja", "tipoEstabelecimento", "faturamentoMensal", "modoOperacao"];
         }
 
         const valido = await trigger(camposParaValidar);
@@ -84,13 +91,16 @@ export default function PaginaRegistro() {
             const payload = {
                 nome_loja: data.nomeLoja,
                 telefone: data.telefone,
+                telefoneWhatsappBusiness: data.telefoneWhatsappBusiness,
                 nome_usuario: data.nomeUsuario,
+                documento: data.documento,
                 email: data.email,
+                integrarWhatsapp: data.integrarWhatsapp,
                 tipo_estabelecimento: data.tipoEstabelecimento,
                 faturamento_mensal: data.faturamentoMensal,
                 senha: data.senha,
                 confirmar_senha: data.confirmarSenha,
-                opcoes_selecionadas: data.opcoesSelecionadas,
+                modo_operacao: data.modoOperacao,
             };
 
             const response = await axios.post(
@@ -147,8 +157,47 @@ export default function PaginaRegistro() {
                                 name="telefone"
                                 control={control}
                                 rules={{ required: 'Telefone é obrigatório' }}
-                                render={({ field }) => <Input label="Telefone" type="tel" placeholder="Digite seu telefone" {...field} error={errors.telefone} />}
+                                render={({ field }) => <Input label="Telefone Pessoal" type="tel" placeholder="Digite seu telefone" {...field} error={errors.telefone} />}
                             />
+                            <Controller
+                                name="documento"
+                                control={control}
+                                rules={{ required: 'CPF ou CNPJ é obrigatório' }}
+                                render={({ field }) => <Input label="CPF\CNPJ" type="tel" placeholder="Digite seu documento" {...field} error={errors.documento} />}
+                            />
+                            {/* <Controller
+                                name="integrarWhatsapp"
+                                control={control}
+                                render={({ field }) => (
+                                    <CheckboxText
+                                        checked={field.value}
+                                        onChange={field.onChange}
+                                        label="Ativar integração com WhatsApp (requer WhatsApp Business)"
+                                    />
+                                )}
+                            />
+
+                            <div
+                                className={`transition-all duration-300 ease-in-out ${integrarWhatsapp ? 'opacity-100 max-h-screen' : 'opacity-0 max-h-0 overflow-hidden'
+                                    }`}
+                            >
+                                {integrarWhatsapp && (
+                                    <Controller
+                                        name="telefoneWhatsappBusiness"
+                                        control={control}
+                                        rules={{ required: 'Telefone para WhatsApp Business é obrigatório' }}
+                                        render={({ field }) => (
+                                            <Input
+                                                label="Telefone WhatsApp Business"
+                                                type="tel"
+                                                placeholder="Digite seu WhatsApp Business"
+                                                {...field}
+                                                error={errors.telefone}
+                                            />
+                                        )}
+                                    />
+                                )}
+                            </div> */}
                         </>
                     )}
 
@@ -193,7 +242,7 @@ export default function PaginaRegistro() {
 
                             <Paragraph text="Como você trabalha hoje?" className="font-medium mb-2" />
                             <Controller
-                                name="opcoesSelecionadas"
+                                name="modoOperacao"
                                 control={control}
                                 rules={{
                                     validate: (value) => value.length > 0 || 'Selecione pelo menos uma opção',
@@ -215,8 +264,8 @@ export default function PaginaRegistro() {
                                                 className="mb-3"
                                             />
                                         ))}
-                                        {errors.opcoesSelecionadas && (
-                                            <p className="text-red-600 text-xs">{errors.opcoesSelecionadas.message}</p>
+                                        {errors.modoOperacao && (
+                                            <p className="text-red-600 text-xs">{errors.modoOperacao.message}</p>
                                         )}
                                     </>
                                 )}
