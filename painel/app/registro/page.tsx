@@ -14,9 +14,8 @@ export default function PaginaRegistro() {
     const [step, setStep] = useState(1);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const [opcoesSelecionadas, setOpcoesSelecionadas] = useState<string[]>([]);
 
-    const { control, handleSubmit, watch, getValues, trigger, formState: { errors, isSubmitted } } = useForm({
+    const { control, handleSubmit, watch, getValues, trigger, formState: { errors } } = useForm({
         defaultValues: {
             nomeUsuario: '',
             email: '',
@@ -26,14 +25,9 @@ export default function PaginaRegistro() {
             faturamentoMensal: '',
             senha: '',
             confirmarSenha: '',
-        }
+            opcoesSelecionadas: [] as string[]
+        },
     });
-
-    const handleCheckboxChange = (opcao: string) => {
-        setOpcoesSelecionadas(prev =>
-            prev.includes(opcao) ? prev.filter(item => item !== opcao) : [...prev, opcao]
-        );
-    };
 
     const camposValidos = [
         "nomeUsuario",
@@ -43,10 +37,11 @@ export default function PaginaRegistro() {
         "tipoEstabelecimento",
         "faturamentoMensal",
         "senha",
-        "confirmarSenha"
-    ] as const;  // Isso garante que o tipo seja o literal de cada valor, e não apenas 'string'
+        "confirmarSenha",
+        "opcoesSelecionadas" // Adicionado aqui
+    ] as const;
 
-    type CamposValidos = typeof camposValidos[number]; // Tipo com os valores literais dos campos
+    type CamposValidos = typeof camposValidos[number];
 
     const handleProximo = async () => {
         let camposParaValidar: CamposValidos[] = [];
@@ -54,21 +49,13 @@ export default function PaginaRegistro() {
         if (step === 1) {
             camposParaValidar = ["nomeUsuario", "email", "telefone"];
         } else if (step === 2) {
-            camposParaValidar = ["nomeLoja", "tipoEstabelecimento", "faturamentoMensal"];
+            camposParaValidar = ["nomeLoja", "tipoEstabelecimento", "faturamentoMensal", "opcoesSelecionadas"];
         }
 
         const valido = await trigger(camposParaValidar);
 
         if (valido) {
             setStep(step + 1);
-        }
-    };
-
-    const handleFinalizar = async () => {
-        const valido = await trigger(["senha", "confirmarSenha"]);
-
-        if (valido) {
-            onSubmit(getValues());
         }
     };
 
@@ -93,6 +80,7 @@ export default function PaginaRegistro() {
                 faturamento_mensal: data.faturamentoMensal,
                 senha: data.senha,
                 confirmar_senha: data.confirmarSenha,
+                opcoes_selecionadas: data.opcoesSelecionadas,
             };
 
             const response = await axios.post(
@@ -121,7 +109,7 @@ export default function PaginaRegistro() {
                 <Title text="Crie sua conta" />
                 <Paragraph
                     text={step === 1 ? 'Fala um pouco sobre você.' : step === 2 ? 'Queremos conhecer seu negócio.' : 'Defina sua senha.'}
-                    className='mb-6'
+                    className="mb-6"
                 />
 
                 {error && <p className="text-red-600 mb-4">{error}</p>}
@@ -185,7 +173,7 @@ export default function PaginaRegistro() {
                                             { value: 'padaria', label: 'Padaria' },
                                             { value: 'cafeteria', label: 'Cafeteria' },
                                             { value: 'sorveteria', label: 'Sorveteria' },
-                                            { value: 'comida oriental', label: 'Comida Oriental' }
+                                            { value: 'comida oriental', label: 'Comida Oriental' },
                                         ]}
                                         {...field}
                                         error={errors.tipoEstabelecimento}
@@ -194,17 +182,35 @@ export default function PaginaRegistro() {
                             />
 
                             <Paragraph text="Como você trabalha hoje?" className="font-medium mb-2" />
-                            <div className="mb-6">
-                                {["Retirada no local", "Entregas delivery", "Emissão de nota fiscal"].map((opcao) => (
-                                    <CheckboxText
-                                        key={opcao}
-                                        checked={opcoesSelecionadas.includes(opcao)}
-                                        onChange={() => handleCheckboxChange(opcao)}
-                                        label={opcao}
-                                        className="mb-3"
-                                    />
-                                ))}
-                            </div>
+                            <Controller
+                                name="opcoesSelecionadas"
+                                control={control}
+                                rules={{
+                                    validate: (value) => value.length > 0 || 'Selecione pelo menos uma opção',
+                                }}
+                                defaultValue={[]}
+                                render={({ field }) => (
+                                    <>
+                                        {["Retirada no local", "Entregas delivery", "Emissão de nota fiscal"].map((opcao) => (
+                                            <CheckboxText
+                                                key={opcao}
+                                                checked={field.value.includes(opcao)}
+                                                onChange={() => {
+                                                    const newValue = field.value.includes(opcao)
+                                                        ? field.value.filter((item: string) => item !== opcao)
+                                                        : [...field.value, opcao];
+                                                    field.onChange(newValue);
+                                                }}
+                                                label={opcao}
+                                                className="mb-3"
+                                            />
+                                        ))}
+                                        {errors.opcoesSelecionadas && (
+                                            <p className="text-red-600 text-xs">{errors.opcoesSelecionadas.message}</p>
+                                        )}
+                                    </>
+                                )}
+                            />
 
                             <Controller
                                 name="faturamentoMensal"
@@ -219,7 +225,7 @@ export default function PaginaRegistro() {
                                             { value: '5000-15000', label: '5 a 15 mil' },
                                             { value: '15000-30000', label: '15 a 30 mil' },
                                             { value: '30000-60000', label: '30 a 60 mil' },
-                                            { value: 'mais-60000', label: '+ de 60 mil' }
+                                            { value: 'mais-60000', label: '+ de 60 mil' },
                                         ]}
                                         {...field}
                                         error={errors.faturamentoMensal}
@@ -239,8 +245,8 @@ export default function PaginaRegistro() {
                                     required: 'Senha é obrigatória',
                                     minLength: {
                                         value: 6,
-                                        message: 'A senha precisa ter pelo menos 6 caracteres'
-                                    }
+                                        message: 'A senha precisa ter pelo menos 6 caracteres',
+                                    },
                                 }}
                                 render={({ field }) => (
                                     <Input
@@ -259,7 +265,7 @@ export default function PaginaRegistro() {
                                 rules={{
                                     required: 'Confirme sua senha',
                                     validate: (value) =>
-                                        value === watch('senha') || 'As senhas não coincidem'
+                                        value === watch('senha') || 'As senhas não coincidem',
                                 }}
                                 render={({ field }) => (
                                     <Input
@@ -274,7 +280,6 @@ export default function PaginaRegistro() {
                         </>
                     )}
 
-
                     <div className="flex justify-between">
                         {step > 1 && (
                             <Button type="button" text="Voltar" onClick={handleVoltar} className="bg-gray-300 hover:bg-gray-400 text-black py-2 px-4 rounded-lg" />
@@ -283,12 +288,8 @@ export default function PaginaRegistro() {
                         {step < 3 ? (
                             <Button type="button" text="Próximo" onClick={handleProximo} className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg" />
                         ) : (
-                            <Button
-                                type="button"
-                                text="Finalizar"
-                                onClick={handleFinalizar}
-                                className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg"
-                            />)}
+                            <Button type="submit" text="Finalizar" className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg" />
+                        )}
                     </div>
                 </form>
             </ContainerForm>
