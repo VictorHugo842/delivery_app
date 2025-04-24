@@ -66,6 +66,15 @@ export default function PaginaRegistro() {
         }
     };
 
+    const handleFinalizar = async () => {
+        const valido = await trigger(["senha", "confirmarSenha"]);
+
+        if (valido) {
+            onSubmit(getValues()); // Chama o onSubmit para submeter os dados
+        }
+    };
+
+
     const onSubmit = async (data: any) => {
         setError('');
         setSuccess('');
@@ -288,8 +297,12 @@ export default function PaginaRegistro() {
                         {step < 3 ? (
                             <Button type="button" text="Próximo" onClick={handleProximo} className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg" />
                         ) : (
-                            <Button type="submit" text="Finalizar" className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg" />
-                        )}
+                            <Button
+                                type="button"
+                                text="Finalizar"
+                                onClick={handleFinalizar}
+                                className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg"
+                            />)}
                     </div>
                 </form>
             </ContainerForm>
