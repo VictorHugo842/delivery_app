@@ -9,6 +9,7 @@ import Title from '../components/title';
 import Paragraph from '../components/paragraph';
 import ContainerForm from '../components/container_form';
 import CheckboxText from '../components/checkbox_text';
+import LinkText from '../components/link_text';
 
 export default function PaginaRegistro() {
     const [step, setStep] = useState(1);
@@ -305,6 +306,10 @@ export default function PaginaRegistro() {
                             />)}
                     </div>
                 </form>
+                <div className="text-center text-xs text-slate-700 mt-4">
+                    <Paragraph text="Já tem uma conta?" className="text-xs inline mb-6 mr-1" />
+                    <LinkText href="/login" text="Acesse" />
+                </div>
             </ContainerForm>
         </div>
     );

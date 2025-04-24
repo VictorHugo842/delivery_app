@@ -7,7 +7,7 @@ interface CheckboxProps {
 
 export default function CheckboxText({ checked, onChange, label, className = '' }: CheckboxProps) {
     return (
-        <label className={`flex items-center ${className}`}>
+        <label className={`flex items-center text-xs ${className}`}>
             <input
                 type="checkbox"
                 checked={checked}

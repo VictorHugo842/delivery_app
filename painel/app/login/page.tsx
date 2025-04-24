@@ -92,19 +92,18 @@ export default function PaginaLogin() {
           />
 
           {/* Checkbox "Lembrar-me" */}
-          <Controller
-            name="lembrarSenha"
-            control={control}
-            render={({ field }) => (
-              <CheckboxText
-                checked={field.value}
-                onChange={field.onChange}
-                label="Lembrar-me"
-              />
-            )}
-          />
-
           <div className="flex justify-between items-center">
+            <Controller
+              name="lembrarSenha"
+              control={control}
+              render={({ field }) => (
+                <CheckboxText
+                  checked={field.value}
+                  onChange={field.onChange}
+                  label="Lembrar-me"
+                />
+              )}
+            />
             <LinkText href="/por-rota-pra-redefinir" text="Esqueceu a senha?" />
           </div>
 
@@ -114,6 +113,7 @@ export default function PaginaLogin() {
             <Paragraph text="Não tem uma conta?" className="text-xs inline mb-6 mr-1" />
             <LinkText href="/registro" text="Registrar" />
           </div>
+
         </form>
       </ContainerForm>
     </div>
