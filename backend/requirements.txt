@@ -10,3 +10,4 @@ python-dotenv
 gunicorn
 axios
 Flask-Migrate
+python-slugify
