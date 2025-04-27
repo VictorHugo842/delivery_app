@@ -1,6 +1,7 @@
 from functools import wraps
 from flask import g, jsonify
 
+# Decorador customizado para garantir que o tenant está presente
 def tenant_required(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
@@ -16,4 +17,3 @@ def tenant_required(fn):
         except Exception:
             return jsonify({"msg": "Erro ao validar o tenant"}), 500
     return wrapper
-

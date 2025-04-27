@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, make_response
+from flask import Blueprint, request, jsonify, g
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import (
     JWTManager, create_access_token, jwt_required,
@@ -10,9 +10,37 @@ from models.usuario_painel import UsuarioPainel
 from models.loja import Loja
 from slugify import slugify
 from werkzeug.security import generate_password_hash  # para segurança de senha
+from middlewares.jwt_required_custom import jwt_required_custom
+from middlewares.tenant_required import tenant_required
+import json
 
 painel_bp = Blueprint('painel', __name__, url_prefix='/painel')
 
+
+@painel_bp.route("/delivery", methods=["GET"])
+@jwt_required_custom
+@tenant_required
+def delivery():
+    # Obter o ID do usuário autenticado a partir do token
+    user_id = g.usuario_id 
+
+    # Buscar o usuário e sua loja correspondente
+    usuario = UsuarioPainel.query.get(user_id)
+    if not usuario:
+        return jsonify({"msg": "Usuário não encontrado"}), 404
+
+    loja = Loja.query.get(usuario.loja_id)
+    if not loja:
+        return jsonify({"msg": "Loja não encontrada"}), 404
+
+    # Retornar os dados da loja e do cliente
+    return jsonify({
+        "message": "Dados da loja e cliente",
+        "store": loja.nome,
+        "store_type": loja.tipo_estabelecimento,
+        "client_name": usuario.nome,
+        "client_email": usuario.email
+    })
 
 # Registro
 @painel_bp.route("/registrar", methods=["POST"])
@@ -32,9 +60,6 @@ def registrar_usuario():
     senha = data.get("senha")
     confirmar_senha = data.get("confirmar_senha")
     modo_operacao = data.get("modo_operacao")
-
-    print(data)
-    print("olá")
 
     # Validação de campos obrigatórios
     if not all([nome_loja, telefone, nome_usuario, documento, email, senha, tipo_estabelecimento, confirmar_senha, modo_operacao, faturamento_mensal]):
@@ -60,53 +85,78 @@ def registrar_usuario():
     if Loja.query.filter_by(slug=slug_loja).first():
         return jsonify({"msg": "Slug já usado"}), 409
 
-    # Criar a loja
-    loja = Loja(
-        nome=nome_loja,
-        telefone_whatsapp_business=telefone_whatsapp_business,
-        tipo_estabelecimento=tipo_estabelecimento,
-        faturamento_mensal=faturamento_mensal,
-        integrar_whatsapp=integrar_whatsapp,
-        modo_operacao=modo_operacao,
-        slug=slug_loja
-    )
-    db.session.add(loja)
-    db.session.commit()
+      # Criar a loja
+    try:
+        loja = Loja(
+            nome=data.get("nome_loja"),
+            telefone_whatsapp_business=data.get("telefoneWhatsappBusiness"),
+            tipo_estabelecimento=data.get("tipo_estabelecimento"),
+            faturamento_mensal=data.get("faturamento_mensal"),
+            integrar_whatsapp=data.get("integrarWhatsapp", False),
+            modo_operacao=data.get("modo_operacao"),
+            slug=slug_loja
+        )
+        db.session.add(loja)
+        db.session.commit()
+    except Exception as e:
+        return jsonify({"msg": "Erro ao criar a loja", "error": str(e)}), 500
 
     # Hash da senha
-    senha_hash = generate_password_hash(senha)
+    senha_hash = generate_password_hash(data.get("senha"))
 
     # Criar o usuário
-    usuario = UsuarioPainel(
-        documento=documento,
-        nome=nome_usuario,
-        email=email,
-        senha_hash=senha_hash,
-        loja_id=loja.id  # Relacionando o usuário à loja
-    )
-    db.session.add(usuario)
-    db.session.commit()
+    try:
+        usuario = UsuarioPainel(
+            documento=data.get("documento"),
+            nome=data.get("nome_usuario"),
+            telefone=data.get("telefone"),  
+            funcao="administrador",  # Definindo a função como administrador
+            email=data.get("email"),
+            senha_hash=senha_hash,
+            loja_id=loja.id  # Relacionando o usuário à loja
+        )
+        db.session.add(usuario)
+        db.session.commit()
+    except Exception as e:
+        return jsonify({"msg": "Erro ao criar o usuário", "error": str(e)}), 500
 
-    print("PASSO DBS CRIADO")
-    # Gerar o JWT Token
-    access_token = create_access_token(identity=usuario.id, fresh=True)
-    print("Access Token:", access_token)
-    
+    # Gerar o access_token
+    try:
+        
+        # Criar um dicionário com as informações
+        identity = {
+            "usuario_id": usuario.id,
+            "loja_id": usuario.loja_id
+        }
+        
+        # Serializar o dicionário para uma string
+        identity_string = json.dumps(identity)
+        
+        # Gerar o token
+        access_token = create_access_token(identity=identity_string, fresh=True)
+        print("Access Token:", access_token)
+    except Exception as e:
+        return jsonify({"msg": "Erro ao gerar o access token", "error": str(e)}), 500
+
     # Responder com o token
     response = jsonify({"msg": "Usuário e loja registrados com sucesso"})
 
-    # Setar o JWT Token no cookie
-    set_access_cookies(response, access_token)
+    # Tentar obter o CSRF Token e configurá-lo no cookie
+    try:
+        csrf_token = get_csrf_token(encoded_token=access_token)  # Obter CSRF Token com o token codificado
+        response.set_cookie('csrf_access_token', csrf_token, httponly=True, secure=False, samesite='Strict')
+    except Exception as e:
+        return jsonify({"msg": "Erro ao configurar o cookie CSRF", "error": str(e)}), 500
 
-   
-    print("Loja ID:", loja.id)
-    print("Usuario ID:", usuario.id)
-    print("Senha Hash:", senha_hash)
+    # Tentar configurar o JWT Token no cookie
+    try:
+        set_access_cookies(response, access_token)
+    except Exception as e:
+        return jsonify({"msg": "Erro ao configurar o cookie de acesso", "error": str(e)}), 500
 
-    csrf_token = get_csrf_token()  # Obter CSRF Token
-    response.set_cookie('csrf_access_token', csrf_token, httponly=True, secure=True, samesite='Strict')
-
+    # Caso não ocorra erro, retornar resposta com sucesso
     return response, 201
+
 
 
 

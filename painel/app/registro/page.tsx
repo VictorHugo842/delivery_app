@@ -110,7 +110,7 @@ export default function PaginaRegistro() {
                 payload,
                 {
                     headers: { 'Content-Type': 'application/json' },
-                    withCredentials: true,  // Certifica-se de que os cookies sejam enviados automaticamente
+                    withCredentials: true,
                 }
             );
 

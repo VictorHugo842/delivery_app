@@ -42,7 +42,6 @@ app.config['JWT_COOKIE_SECURE'] = False
 app.config['JWT_COOKIE_SAMESITE'] = 'Strict'
 app.config['JWT_ACCESS_COOKIE_PATH'] = '/'
 app.config['JWT_COOKIE_CSRF_PROTECT'] = True
-app.config['JWT_ACCESS_CSRF_HEADER_NAME'] = 'X-CSRF-TOKEN'
 
 # Inicializar extensoes
 jwt = JWTManager(app)
