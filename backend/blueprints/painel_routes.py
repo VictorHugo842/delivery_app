@@ -9,13 +9,12 @@ from extensions import db
 from models.usuario_painel import UsuarioPainel
 from models.loja import Loja
 from slugify import slugify
-import bcrypt
+from werkzeug.security import generate_password_hash  # para segurança de senha
 
 painel_bp = Blueprint('painel', __name__, url_prefix='/painel')
 
 
 # Registro
-
 @painel_bp.route("/registrar", methods=["POST"])
 def registrar_usuario():
     data = request.json
@@ -35,6 +34,7 @@ def registrar_usuario():
     modo_operacao = data.get("modo_operacao")
 
     print(data)
+    print("olá")
 
     # Validação de campos obrigatórios
     if not all([nome_loja, telefone, nome_usuario, documento, email, senha, tipo_estabelecimento, confirmar_senha, modo_operacao, faturamento_mensal]):
@@ -51,8 +51,8 @@ def registrar_usuario():
     if UsuarioPainel.query.filter_by(documento=documento).first():
         return jsonify({"msg": "Documento já cadastrado"}), 409
     
-    # Verificar se o documento já está cadastrado
-    if UsuarioPainel.query.filter_by(nome_loja=nome_loja).first():
+    # Verificar se o nome da loja já está cadastrado
+    if Loja.query.filter_by(nome=nome_loja).first():
         return jsonify({"msg": "Nome da loja já cadastrado"}), 409
 
     # Verificar se o slug da loja já existe
@@ -74,7 +74,7 @@ def registrar_usuario():
     db.session.commit()
 
     # Hash da senha
-    senha_hash = bcrypt.hashpw(senha.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    senha_hash = generate_password_hash(senha)
 
     # Criar o usuário
     usuario = UsuarioPainel(
@@ -82,20 +82,23 @@ def registrar_usuario():
         nome=nome_usuario,
         email=email,
         senha_hash=senha_hash,
-        loja_id=loja.id
+        loja_id=loja.id  # Relacionando o usuário à loja
     )
     db.session.add(usuario)
     db.session.commit()
 
+    print("PASSO DBS CRIADO")
     # Gerar o JWT Token
     access_token = create_access_token(identity=usuario.id, fresh=True)
+    print("Access Token:", access_token)
+    
     # Responder com o token
     response = jsonify({"msg": "Usuário e loja registrados com sucesso"})
 
     # Setar o JWT Token no cookie
     set_access_cookies(response, access_token)
 
-    print("Access Token:", access_token)
+   
     print("Loja ID:", loja.id)
     print("Usuario ID:", usuario.id)
     print("Senha Hash:", senha_hash)
@@ -104,6 +107,7 @@ def registrar_usuario():
     response.set_cookie('csrf_access_token', csrf_token, httponly=True, secure=True, samesite='Strict')
 
     return response, 201
+
 
 
 # # Login - envia JWT em cookie HttpOnly + Secure + SameSite=strict

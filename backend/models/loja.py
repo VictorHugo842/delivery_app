@@ -1,5 +1,5 @@
 from extensions import db
-from datetime import datetime
+from datetime import datetime, timezone
 
 class Loja(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -8,6 +8,6 @@ class Loja(db.Model):
     tipo_estabelecimento = db.Column(db.String(50))
     faturamento_mensal = db.Column(db.String(50))
     integrar_whatsapp = db.Column(db.Boolean, default=False)
-    modo_operacao = db.Column(db.JSON) 
+    modo_operacao = db.Column(db.JSON)
     slug = db.Column(db.String(100), unique=True, nullable=False)
-    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
