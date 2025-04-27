@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import axios from 'axios';
 import Input from '../components/input';
@@ -15,6 +16,7 @@ export default function PaginaRegistro() {
     const [step, setStep] = useState(1);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const router = useRouter();
 
     const { control, handleSubmit, watch, getValues, trigger, formState: { errors } } = useForm({
         defaultValues: {
@@ -108,12 +110,15 @@ export default function PaginaRegistro() {
                 payload,
                 {
                     headers: { 'Content-Type': 'application/json' },
-                    withCredentials: true,
+                    withCredentials: true,  // Certifica-se de que os cookies sejam enviados automaticamente
                 }
             );
 
+            // Sucesso no registro
             setSuccess('Registro realizado com sucesso!');
             console.log('Registro bem-sucedido:', response.data);
+
+            router.push('/delivery');  // Redireciona após o sucesso
         } catch (error: any) {
             if (axios.isAxiosError(error)) {
                 setError(error.response?.data?.msg || 'Erro ao registrar usuário');
