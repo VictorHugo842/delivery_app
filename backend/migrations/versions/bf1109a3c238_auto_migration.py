@@ -1,8 +1,8 @@
 """Auto migration
 
-Revision ID: 9c98121ae60c
+Revision ID: bf1109a3c238
 Revises: 
-Create Date: 2025-04-21 23:41:03.981687
+Create Date: 2025-04-27 01:57:30.863113
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '9c98121ae60c'
+revision = 'bf1109a3c238'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,6 +21,11 @@ def upgrade():
     op.create_table('loja',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('nome', sa.String(length=100), nullable=False),
+    sa.Column('telefone_whatsapp_business', sa.String(length=20), nullable=True),
+    sa.Column('tipo_estabelecimento', sa.String(length=50), nullable=True),
+    sa.Column('faturamento_mensal', sa.String(length=50), nullable=True),
+    sa.Column('integrar_whatsapp', sa.Boolean(), nullable=True),
+    sa.Column('modo_operacao', sa.JSON(), nullable=True),
     sa.Column('slug', sa.String(length=100), nullable=False),
     sa.Column('criado_em', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
@@ -31,6 +36,7 @@ def upgrade():
     sa.Column('documento', sa.String(length=14), nullable=False),
     sa.Column('nome', sa.String(length=100), nullable=False),
     sa.Column('email', sa.String(length=120), nullable=False),
+    sa.Column('telefone', sa.String(length=20), nullable=True),
     sa.Column('senha_hash', sa.String(length=128), nullable=False),
     sa.Column('funcao', sa.String(length=20), nullable=False),
     sa.Column('loja_id', sa.Integer(), nullable=False),

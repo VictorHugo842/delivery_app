@@ -29,4 +29,4 @@ RUN chmod +x entrypoint.sh
 EXPOSE 5000
 
 # Comando de inicialização do container
-ENTRYPOINT ["sh", "./entrypoint.sh"]
+ENTRYPOINT ["/bin/sh", "./entrypoint.sh"]

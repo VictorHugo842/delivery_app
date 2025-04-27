@@ -10,7 +10,6 @@ while ! nc -z "$DB_HOST" "$DB_PORT"; do
 done
 echo "Banco de dados está acessível!"
 
-
 # Inicializar o diretório de migrações se não existir
 echo "Verificando diretório de migrações..."
 if [ ! -d "migrations" ]; then

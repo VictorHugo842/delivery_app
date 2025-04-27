@@ -49,7 +49,6 @@ jwt = JWTManager(app)
 db.init_app(app)
 migrate = Migrate(app, db)
 
-
 # Registrar os Blueprints
 app.register_blueprint(cardapio_bp)
 app.register_blueprint(painel_bp)

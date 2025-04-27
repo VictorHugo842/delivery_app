@@ -121,11 +121,16 @@ export default function PaginaRegistro() {
             router.push('/delivery');  // Redireciona após o sucesso
         } catch (error: any) {
             if (axios.isAxiosError(error)) {
+                // Logar informações completas sobre o erro de Axios
+                console.log('Erro de Axios:', error); // Loga o erro completo
                 setError(error.response?.data?.msg || 'Erro ao registrar usuário');
+                console.log('Erro ao registrar usuário:', error.response?.data);
             } else {
+                console.log('Erro inesperado:', error); // Loga o erro completo
                 setError('Erro inesperado: ' + error.message);
             }
         }
+
     };
 
     return (
