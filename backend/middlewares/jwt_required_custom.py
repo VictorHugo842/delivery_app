@@ -7,7 +7,6 @@ import json
 def jwt_required_custom(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        
         try:
             # Verifica se existe JWT válido na requisição
             try:

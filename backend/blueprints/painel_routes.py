@@ -1,10 +1,5 @@
 from flask import Blueprint, request, jsonify, g
 from flask_sqlalchemy import SQLAlchemy
-from flask_jwt_extended import (
-    JWTManager, create_access_token, jwt_required,
-    get_jwt_identity, set_access_cookies, unset_jwt_cookies,
-    get_csrf_token
-)
 from extensions import db, redis
 from models.usuario_painel import UsuarioPainel
 from models.loja import Loja
@@ -12,17 +7,31 @@ from slugify import slugify
 from werkzeug.security import generate_password_hash, check_password_hash  # para segurança de senha
 from middlewares.jwt_required_custom import jwt_required_custom
 from middlewares.tenant_required import tenant_required
+from flask_jwt_extended import (
+    JWTManager, create_access_token, jwt_required,
+    get_jwt_identity, set_access_cookies, unset_jwt_cookies,
+    get_csrf_token
+)
 import json
 
 painel_bp = Blueprint('painel', __name__, url_prefix='/painel')
 
-@painel_bp.route('/test_redis2', methods=['GET'])
-def painel_test_redis():
-    redis.incr('painel_hits')  # incrementa contador no Redis
-    hits = redis.get('painel_hits')  # pega o contador atualizado
-    return jsonify({
-        'message': f'This painel page has been visited {hits.decode()} times.'
-    })
+# @painel_bp.route('/test_redis2', methods=['GET'])
+# @jwt_required_custom
+# @tenant_required
+# def painel_test_redis():
+#     redis.incr('painel_hits')  # incrementa contador no Redis
+#     hits = redis.get('painel_hits')  # pega o contador atualizado
+#     return jsonify({
+#         'message': f'This painel page has been visited {hits.decode()} times.'
+#     })
+
+
+@painel_bp.route("/protect_route", methods=["GET","POST"])
+@jwt_required_custom
+@tenant_required
+def protect_route():
+    return jsonify({"message": "Acesso permitido!"}), 200
 
 @painel_bp.route("/delivery", methods=["GET"])
 @jwt_required_custom

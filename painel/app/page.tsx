@@ -1,42 +1,21 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';  // Importa o hook de navegação do Next.js
 
 function Home() {
-
-  const [message, setMessage] = useState("Loading");
-  const [people, setPeople] = useState([]);
-
+  const router = useRouter();  // Hook para navegação
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/painel`)
-      .then((response) => response.json())
-      .then((data) => {
-        console.log('API response:', data);
-        setMessage(data.message);
-        setPeople(data.people);
-      })
-      .catch((error) => {
-        console.error('Error fetching API:', error);
-      });
-  }, [])
+    // Redireciona automaticamente para a página 'delivery' após o componente ser montado
+    router.push('/delivery');
+  }, [router]);
 
   return (
     <div>
-      <h1>{message}</h1>
-      <ul>
-        {people.map((person, index) => (
-          <li key={index}>{person}</li>
-        ))}
-      </ul>
+      <h1>Redirecionando...</h1>  {/* Mensagem opcional enquanto o redirecionamento ocorre */}
     </div>
   );
 }
 
-export default Home
-
-
-// MUDAR PRA AXIOS ? 
-// SUBIR REPOSITÓRIO PRA GARANTIR O PROJETO.
-// SUBIR EM NO RENDER ?
-// PUBLICAÇÃO NO LINKEDIN DE TUDO OQ FOI FEITO ATÉ AGORA.
+export default Home;

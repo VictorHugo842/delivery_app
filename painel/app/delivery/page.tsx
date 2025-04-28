@@ -1,43 +1,46 @@
+// components/Delivery.tsx
 'use client';
 
 import { useEffect, useState } from "react";
 import axios from 'axios';
+import { useRouter } from 'next/navigation';
+import { protectRoute } from '../utils/protect_route';
+import { getCookie } from '../utils/cookies';
 
 const Delivery = () => {
   const [data, setData] = useState<{ message: string; store: string; store_type: string; client_name: string; client_email: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
-
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
+       
+      // Protege a rota antes de fazer qualquer requisição
+      // Isso garante que o usuário esteja autenticado antes de acessar a página
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/painel/delivery`, {
-          withCredentials: true  // Permite o envio de cookies com a requisição
-        });
-        setData(response.data);  // Armazenar os dados da loja e do cliente
+        await protectRoute(router);
       } catch (err: any) {
-        setError(err.response?.data?.msg || err.message);  // Captura o erro caso ocorra
+        // O próprio protectRoute já faz o push para /error, então só retorna
+        return;
       }
 
-      const showCookies = () => {
-        // Exibe todos os cookies armazenados
-        console.log("Cookies na página:", document.cookie);
-      };
+      try {
+        // Só tenta buscar dados se passou na proteção
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/painel/delivery`, {
+          withCredentials: true,
+        });
 
-      // Chame essa função em algum momento no seu código, por exemplo, após a requisição de logout
-      showCookies();
-
+        setData(response.data);
+      } catch (err: any) {
+        const errorMessage = err.message;
+        setError(errorMessage);
+        router.push(`/error?message=${encodeURIComponent('Erro ao carregar dados da loja')}&details=${encodeURIComponent(errorMessage)}`);
+      }
     };
 
-    fetchData();  // Chama a função de fetch assim que o componente for montado
-  }, []); // O useEffect vai rodar apenas uma vez, quando o componente for montado
+    fetchData();
+  }, []);
 
-  const getCookie = (name: string) => {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop()?.split(';').shift();
-    return null;
-  };
 
   const handleLogout = async () => {
     try {
@@ -58,15 +61,18 @@ const Delivery = () => {
 
       // Após logout, você pode redirecionar ou limpar o estado
       setData(null);
-      window.location.href = "/login"; // Redireciona para a página de login (ajuste conforme seu projeto)
+      router.push("/login"); // Redireciona para a página de login
     } catch (err: any) {
-      setError(err.response?.data?.msg || err.message);
+      const errorMessage = err.response?.data?.msg || err.message;
+      setError(errorMessage);
+      // Redireciona para a página de erro passando os dados
+      router.push(`/error?message=${encodeURIComponent('Erro ao tentar fazer logout')}&details=${encodeURIComponent(errorMessage)}`);
     }
   };
 
-
   if (error) {
-    return <div>Erro: {error}</div>;
+    // Em caso de erro, será redirecionado automaticamente para a página de erro
+    return null;
   }
 
   if (!data) {
