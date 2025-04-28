@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Button from '../components/button'; // Importando o componente Button
 import LinkText from '../components/link_text'; // Importando o componente LinkText
@@ -9,8 +8,8 @@ import Paragraph from '../components/paragraph'; // Importando o componente Para
 import ContainerForm from '../components/container_form'; // Importando o ContainerForm
 
 const ErrorPage = () => {
-    const router = useRouter();
     const [errorData, setErrorData] = useState<{ message: string; details: string } | null>(null);
+    const [showDetails, setShowDetails] = useState(false); // Estado para controlar a exibição dos detalhes
 
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -29,24 +28,39 @@ const ErrorPage = () => {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-8">
             <ContainerForm>
-                <Title text="Ocorreu um erro" className="text-2xl font-bold mb-4" />
+                <Title text="Ocorreu um erro." className="text-2xl font-bold mb-4" />
 
-                {/* Exibe a mensagem de erro se houver, caso contrário exibe mensagem padrão */}
+                {/* Exibe a mensagem de erro */}
                 <Paragraph
                     text={`${errorData?.message || 'Nenhuma mensagem de erro disponível'}`}
                     className="text-lg text-gray-800 mb-4"
                 />
-                <Paragraph
-                    text={`${errorData?.details || 'Não há detalhes disponíveis'}`}
-                    className="text-sm text-gray-600 mb-6"
-                />
+
+                {/* Link para mostrar detalhes do erro */}
+                <div>
+                    <LinkText
+                        href="#"
+                        text="Ver detalhes"
+                        onClick={() => setShowDetails(!showDetails)} // Alterna a exibição dos detalhes
+                        className=' text-red-500 font-bold'
+                    />
+                </div>
+
+                {/* Exibe os detalhes do erro se 'showDetails' for verdadeiro */}
+                {showDetails && (
+                    <Paragraph
+                        text={`${errorData?.details || 'Não há detalhes disponíveis'}`}
+                        className="text-sm text-gray-600"
+
+                    />
+                )}
 
                 {/* Link para voltar ao login */}
                 <div className="mt-4 text-center">
                     <LinkText
                         href="/login"
                         text="Voltar para o Login"
-                        className="text-blue-500 hover:text-blue-600 transition"
+                        className=' text-blue-400'
                     />
                 </div>
             </ContainerForm>

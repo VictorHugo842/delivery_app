@@ -110,14 +110,14 @@ export default function PaginaLogin() {
                 />
               )}
             />
-            <LinkText href="/por-rota-pra-redefinir" text="Esqueceu a senha?" />
+            <LinkText href="/por-rota-pra-redefinir" text="Esqueceu a senha?" className='text-blue-400' />
           </div>
 
           <Button type="submit" text="Entrar" />
 
           <div className="text-center text-xs text-slate-700 mt-4">
             <Paragraph text="Não tem uma conta?" className="text-xs inline mb-6 mr-1" />
-            <LinkText href="/registro" text="Registrar" />
+            <LinkText href="/registro" text="Registrar" className='text-blue-400' />
           </div>
 
         </form>

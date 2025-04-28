@@ -28,7 +28,7 @@ const Delivery = () => {
       }
 
       try {
-        // Só tenta buscar dados se passou na proteção
+        // Faz a requisição para obter os dados do painel de delivery
         const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/painel/delivery`, {
           withCredentials: true,
         });
