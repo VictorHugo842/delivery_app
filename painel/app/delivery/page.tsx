@@ -6,6 +6,9 @@ import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { protectRoute } from '../utils/protect_route';
 import { getCookie } from '../utils/cookies';
+import Paragraph from "../components/paragraph";
+import Title from "../components/title";
+import LinkText from "../components/link_text";
 
 const Delivery = () => {
   const [data, setData] = useState<{ message: string; store: string; store_type: string; client_name: string; client_email: string } | null>(null);
@@ -14,7 +17,7 @@ const Delivery = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-       
+
       // Protege a rota antes de fazer qualquer requisição
       // Isso garante que o usuário esteja autenticado antes de acessar a página
       try {
@@ -32,9 +35,8 @@ const Delivery = () => {
 
         setData(response.data);
       } catch (err: any) {
-        const errorMessage = err.message;
+        const errorMessage = err.response?.data?.msg || err.message;
         setError(errorMessage);
-        router.push(`/error?message=${encodeURIComponent('Erro ao carregar dados da loja')}&details=${encodeURIComponent(errorMessage)}`);
       }
     };
 
@@ -65,18 +67,28 @@ const Delivery = () => {
     } catch (err: any) {
       const errorMessage = err.response?.data?.msg || err.message;
       setError(errorMessage);
-      // Redireciona para a página de erro passando os dados
-      router.push(`/error?message=${encodeURIComponent('Erro ao tentar fazer logout')}&details=${encodeURIComponent(errorMessage)}`);
     }
   };
 
   if (error) {
-    // Em caso de erro, será redirecionado automaticamente para a página de erro
-    return null;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-8">
+        <Title className="text-red-500" text="Erro ao carregar dados" />
+        <Paragraph
+          text={error}
+          className="text-lg"
+        />
+      </div>
+    );
   }
 
   if (!data) {
-    return <div>Carregando...</div>;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-8">
+        <Title text="Carregando..." />
+      </div>
+    );
+    
   }
 
   return (
