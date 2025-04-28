@@ -140,21 +140,8 @@ def registrar_usuario():
 
     # Responder com o token
     response = jsonify({"msg": "Usuário e loja registrados com sucesso"})
+    set_access_cookies(response, access_token)
 
-    # Tentar obter o CSRF Token e configurá-lo no cookie
-    try:
-        csrf_token = get_csrf_token(encoded_token=access_token)  # Obter CSRF Token com o token codificado
-        response.set_cookie('csrf_access_token', csrf_token, httponly=True, secure=False, samesite='Strict')
-    except Exception as e:
-        return jsonify({"msg": "Erro ao configurar o cookie CSRF", "error": str(e)}), 500
-
-    # Tentar configurar o JWT Token no cookie
-    try:
-        set_access_cookies(response, access_token)
-    except Exception as e:
-        return jsonify({"msg": "Erro ao configurar o cookie de acesso", "error": str(e)}), 500
-
-    # Caso não ocorra erro, retornar resposta com sucesso
     return response, 201
 
 ######################################################################
