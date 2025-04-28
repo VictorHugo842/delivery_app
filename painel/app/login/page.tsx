@@ -2,6 +2,7 @@
 
 import { useForm, Controller } from 'react-hook-form';
 import axios from 'axios';
+import { useRouter } from 'next/navigation'; // Importando o useRouter
 import Input from '../components/input';
 import Button from '../components/button';
 import Title from '../components/title';
@@ -20,6 +21,8 @@ export default function PaginaLogin() {
     },
   });
 
+  const router = useRouter(); // Inicializando o hook useRouter
+
   const onSubmit = async (data: any) => {
     const { email, senha, lembrarSenha } = data;
 
@@ -37,6 +40,9 @@ export default function PaginaLogin() {
 
       console.log('Login bem-sucedido:', response.data);
       alert('Login realizado com sucesso!');
+
+      // Redireciona para a página /delivery após o login bem-sucedido
+      router.push('/delivery');
     } catch (error: any) {
       if (axios.isAxiosError(error)) {
         alert(error.response?.data?.msg || 'Erro ao fazer login');

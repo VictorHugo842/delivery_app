@@ -1,50 +1,49 @@
 from functools import wraps
 from flask import g, jsonify
-from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
-
+from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request, get_csrf_token
 import json
-from functools import wraps
-from flask import g, jsonify
-from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 
 # Decorador customizado para verificar o JWT
 def jwt_required_custom(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
+        
         try:
             # Verifica se existe JWT válido na requisição
-            verify_jwt_in_request()
-            identidade = get_jwt_identity()
-            print(identidade)  # Para depuração, remova em produção
+            try:
+                verify_jwt_in_request()
+            except Exception as e:
+                return jsonify({"msg": f"Erro na verificação do JWT: {str(e)}"}), 401
 
-            # Verifica se a identidade é uma string e tenta convertê-la para dicionário
+            # Obtém a identidade do token
+            try:
+                identidade = get_jwt_identity()
+                print(f"Identidade JWT: {identidade}")  # Para depuração
+            except Exception as e:
+                return jsonify({"msg": f"Erro ao obter a identidade do JWT: {str(e)}"}), 401
+
+            # Se a identidade for string, tenta carregar como JSON
             if isinstance(identidade, str):
                 try:
-                    # Tenta converter a string JSON para um dicionário
                     identidade = json.loads(identidade)
-                except json.JSONDecodeError:
-                    return jsonify({"msg": "Erro: Não foi possível decodificar a identidade. Formato inválido."}), 401
+                except json.JSONDecodeError as e:
+                    return jsonify({"msg": f"Erro ao decodificar identidade JSON: {str(e)}"}), 401
 
-            # Verifica se agora a identidade é um dicionário
             if not isinstance(identidade, dict):
-                return jsonify({"msg": "Erro: Identidade não é um dicionário válido"}), 401
-            
-            # Garante que o token contém "usuario_id" e "loja_id"
-            if "usuario_id" not in identidade or "loja_id" not in identidade:
-                return jsonify({"msg": "Usuário ou loja não autenticados"}), 401
+                return jsonify({"msg": "Erro: Identidade não é um dicionário válido."}), 401
 
-            # Armazenando as informações do usuário e loja no contexto da requisição
+            if "usuario_id" not in identidade or "loja_id" not in identidade:
+                return jsonify({"msg": "Erro: Usuário ou loja não autenticados."}), 401
+
+            # Guarda usuário e loja no contexto da requisição
             g.usuario_id = identidade["usuario_id"]
             g.loja_id = identidade["loja_id"]
-            
-            # Chama a função da rota original
+
             return fn(*args, **kwargs)
 
         except Exception as e:
-            # Se houver erro, retornamos uma mensagem de erro
-            return jsonify({"msg": f"Erro ao verificar o token: {str(e)}"}), 401
+            return jsonify({"msg": f"Erro inesperado no wrapper: {str(e)}"}), 500
     return wrapper
-
 
 # .ENV PARA secure=False , FALSE É DEV E TRUE É PROD
 # FAZER TESSTE COM O secure=True E secure=False

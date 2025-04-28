@@ -9,7 +9,7 @@ from extensions import db
 from models.usuario_painel import UsuarioPainel
 from models.loja import Loja
 from slugify import slugify
-from werkzeug.security import generate_password_hash  # para segurança de senha
+from werkzeug.security import generate_password_hash, check_password_hash  # para segurança de senha
 from middlewares.jwt_required_custom import jwt_required_custom
 from middlewares.tenant_required import tenant_required
 import json
@@ -157,48 +157,59 @@ def registrar_usuario():
     # Caso não ocorra erro, retornar resposta com sucesso
     return response, 201
 
+######################################################################
+# USAR LIMITER PRA LIMITAR O NÚMERO DE TENTATIVAS DE LOGIN E REGISTRO
+######################################################################
+
+@painel_bp.route("/login", methods=["POST"])
+def login_usuario():
+    data = request.json
+
+    email = data.get("email")
+    senha = data.get("senha")
+
+    if not email or not senha:
+        return jsonify({"msg": "Preencha email e senha"}), 400
+
+    # Buscar o usuário pelo email
+    usuario = UsuarioPainel.query.filter_by(email=email).first()
+
+    if not usuario or not check_password_hash(usuario.senha_hash, senha):
+        return jsonify({"msg": "Email ou senha inválidos"}), 401
+
+    # Criar o dicionário de identidade
+    identity = {
+        "usuario_id": usuario.id,
+        "loja_id": usuario.loja_id
+    }
+
+    # Serializar o dicionário para uma string
+    identity_string = json.dumps(identity)
+
+    # Gerar o token
+    try:
+        access_token = create_access_token(identity=identity_string, fresh=True)
+
+    except Exception as e:
+        return jsonify({"msg": "Erro ao gerar o access token", "error": str(e)}), 500
+
+    response = jsonify({"msg": "Login realizado com sucesso"})
+    set_access_cookies(response, access_token)
+   
+    return response, 200
 
 
+@painel_bp.route("/logout", methods=["POST"])
+@jwt_required_custom
+@tenant_required
+def logout_usuario():
+    response = jsonify({"msg": "Logout realizado com sucesso"})
 
-# # Login - envia JWT em cookie HttpOnly + Secure + SameSite=strict
-# @painel_bp.route("/login", methods=["POST"])
-# @limiter.limit("5 per minute")  # Limita a 5 tentativas por minuto
-# def login():
-#     data = request.json
-#     email = data.get("email")
-#     senha = data.get("senha")
+    # Limpar cookies de autenticação
+    try:
+        unset_jwt_cookies(response)
+    except Exception as e:
+        return jsonify({"msg": "Erro ao limpar cookies", "error": str(e)}), 500
 
-#     user = UsuarioPainel.query.filter_by(email=email).first()
-#     if not user or not bcrypt.checkpw(senha.encode("utf-8"), user.senha_hash.encode("utf-8")):
-#         return jsonify({"msg": "Credenciais inválidas"}), 401
+    return response, 200
 
-#     access_token = create_access_token(identity={
-#         "id": user.id,
-#         "email": user.email,
-#         "loja_id": user.loja_id,
-#         "funcao": user.funcao
-#     })
-
-#     resp = make_response(jsonify({"msg": "Login realizado com sucesso"}))
-#     set_access_cookies(resp, access_token, max_age=3600, secure=True, httponly=True, samesite='Strict')
-
-#     return resp
-
-
-# # Logout - limpa cookie
-# @painel_bp.route("/logout", methods=["POST"])
-# def logout():
-#     resp = make_response(jsonify({"msg": "Logout realizado com sucesso"}))
-#     unset_jwt_cookies(resp)
-#     return resp
-
-
-# # Rota protegida com JWT
-# @painel_bp.route("/painel/teste", methods=["GET"])
-# @jwt_required()
-# def rota_protegida():
-#     usuario = get_jwt_identity()
-#     return jsonify({
-#         "msg": "Acesso autorizado!",
-#         "usuario": usuario
-#     })
