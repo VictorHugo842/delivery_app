@@ -8,10 +8,9 @@ from dotenv import load_dotenv
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_jwt_extended import JWTManager
-from extensions import db
+from extensions import db, redis
 from middlewares.jwt_required_custom import jwt_required_custom
 from middlewares.tenant_required import tenant_required
-
 
 # Importar os Blueprints
 from blueprints.cardapio_routes import cardapio_bp
@@ -20,6 +19,8 @@ from blueprints.painel_routes import painel_bp
 load_dotenv()
 
 app = Flask(__name__)
+
+# Configuração do CORS
 CORS(app, supports_credentials=True)
 
 limiter = Limiter(get_remote_address, app=app)
@@ -51,6 +52,11 @@ migrate = Migrate(app, db)
 # Registrar os Blueprints
 app.register_blueprint(cardapio_bp)
 app.register_blueprint(painel_bp)
+
+@app.route('/test_redis', methods=['GET'])
+def test_redis():
+    redis.incr('hits')
+    return 'This page has been visited {} times.'.format(redis.get('hits'))
 
 @app.route('/test_db_connection')
 @jwt_required_custom

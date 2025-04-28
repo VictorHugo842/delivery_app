@@ -12,3 +12,4 @@ axios
 Flask-Migrate
 python-slugify
 Flask-Limiter
+redis
