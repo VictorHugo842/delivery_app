@@ -16,8 +16,8 @@ const poppins = Poppins({
 });
 
 export const metadata = {
-  title: 'Minha Aplicação',
-  description: 'Aplicação de exemplo com Next.js',
+  title: 'Delivery App',
+  description: 'App de Delivery',
 };
 
 const RootLayout = ({ children }: { children: ReactNode }) => {
@@ -25,7 +25,7 @@ const RootLayout = ({ children }: { children: ReactNode }) => {
     <html lang="pt-BR">
       <body className={`${robotoMono.variable} ${poppins.variable} antialiased`}>
         {/* Navbar Vertical */}
-        <header className="bg-blue-600 text-white p-4 fixed top-0 left-0 h-full w-64">
+        {/* <header className="bg-blue-600 text-white p-4 fixed top-0 left-0 h-full w-64">
           <nav className="flex flex-col items-start space-y-4">
             <h1 className="text-xl font-bold mb-8">Minha Loja</h1>
             <ul className="flex flex-col space-y-2">
@@ -34,10 +34,11 @@ const RootLayout = ({ children }: { children: ReactNode }) => {
               <li><a href="/about" className="hover:text-gray-300">Sobre</a></li>
             </ul>
           </nav>
-        </header>
+        </header> */}
 
         {/* Conteúdo Principal com margem à direita da navbar */}
-        <main className="p-8 ml-64">{children}</main>
+        {/* <main className="p-8 ml-64">{children}</main> */}
+        <main className="">{children}</main>
 
         {/* Rodapé */}
         <footer className="bg-gray-800 text-white text-center p-4">

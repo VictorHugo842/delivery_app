@@ -56,13 +56,13 @@ const ErrorPage = () => {
                 )}
 
                 {/* Link para voltar ao login */}
-                <div className="mt-4 text-center">
+                {/* <div className="mt-1 text-right">
                     <LinkText
                         href="/login"
-                        text="Voltar para o Login"
+                        text="Acesse sua conta"
                         className=' text-blue-400'
                     />
-                </div>
+                </div> */}
             </ContainerForm>
         </div>
     );

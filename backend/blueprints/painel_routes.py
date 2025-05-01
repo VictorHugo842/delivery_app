@@ -14,9 +14,9 @@ from flask_jwt_extended import (
 )
 import json
 
-painel_bp = Blueprint('painel', __name__, url_prefix='/painel')
+painel_api = Blueprint('painel', __name__, url_prefix='/painel')
 
-# @painel_bp.route('/test_redis2', methods=['GET'])
+# @painel_api.route('/test_redis2', methods=['GET'])
 # @jwt_required_custom
 # @tenant_required
 # def painel_test_redis():
@@ -26,14 +26,19 @@ painel_bp = Blueprint('painel', __name__, url_prefix='/painel')
 #         'message': f'This painel page has been visited {hits.decode()} times.'
 #     })
 
+@painel_api.route("/check_login", methods=["GET"])
+@jwt_required_custom
+@tenant_required
+def check_login():
+    return jsonify({"msg": "Usuário autenticado", "logged_in": True}), 200
 
-@painel_bp.route("/protect_route", methods=["GET","POST"])
+@painel_api.route("/protect_route", methods=["GET","POST"])
 @jwt_required_custom
 @tenant_required
 def protect_route():
     return jsonify({"message": "Acesso permitido!"}), 200
 
-@painel_bp.route("/delivery", methods=["GET"])
+@painel_api.route("/delivery", methods=["GET"])
 @jwt_required_custom
 @tenant_required
 def delivery():
@@ -59,7 +64,7 @@ def delivery():
     })
 
 # Registro
-@painel_bp.route("/registrar", methods=["POST"])
+@painel_api.route("/registrar", methods=["POST"])
 def registrar_usuario():
     data = request.json
 
@@ -164,7 +169,7 @@ def registrar_usuario():
 # USAR LIMITER PRA LIMITAR O NÚMERO DE TENTATIVAS DE LOGIN E REGISTRO
 ######################################################################
 
-@painel_bp.route("/login", methods=["POST"])
+@painel_api.route("/login", methods=["POST"])
 def login_usuario():
     data = request.json
 
@@ -202,7 +207,7 @@ def login_usuario():
     return response, 200
 
 
-@painel_bp.route("/logout", methods=["POST"])
+@painel_api.route("/logout", methods=["POST"])
 @jwt_required_custom
 @tenant_required
 def logout_usuario():

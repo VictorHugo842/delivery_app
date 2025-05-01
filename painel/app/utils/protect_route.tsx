@@ -1,29 +1,40 @@
 import axios from 'axios';
-import { getCookie } from './cookies'; 
+import { getCookie } from './cookies';
 
 export const protectRoute = async (router: any) => {
     try {
-        // Pega o CSRF Token do cookie
         const csrfToken = getCookie('csrf_access_token');
 
-        // Faz a requisição POST para a proteção da rota, enviando o CSRF Token no cabeçalho
         await axios.post(
             `${process.env.NEXT_PUBLIC_API_URL}/painel/protect_route`,
-            {}, // Corpo vazio porque você está apenas validando a permissão
+            {},
             {
-                withCredentials: true, // Garante que os cookies sejam enviados
+                withCredentials: true,
                 headers: {
-                    'X-CSRF-Token': csrfToken || '', // Envia o CSRF Token no cabeçalho
+                    'X-CSRF-Token': csrfToken || '',
                 },
             }
         );
     } catch (err: any) {
-        const errorMessage = err.response?.data?.msg || err.message;
+        const errorMessage = 'Você não tem permissão para acessar esta página.';
+        const statusCode = err?.response?.status || 500; // Pega o status ou assume 500
+        const errorDetails = err?.response?.data?.msg || err.message;
 
-        // Redireciona para a página de erro, passando a mensagem e o erro detalhado
-        router.push(`/error?message=${encodeURIComponent('Você não tem permissão para acessar esta página.')}&details=${encodeURIComponent(errorMessage)}`);
+        // Envia o log, mas não espera por ele
+        axios
+            .post(`${process.env.NEXT_PUBLIC_API_URL}/logs/log_error`, {
+                message: 'Erro de autenticação JWT (Rota Protegida)',
+                details: errorDetails,
+            })
+            .catch((logErr) => {
+                console.error('Erro ao enviar log para Flask:', logErr);
+            });
 
-        // Lança o erro para impedir a execução de qualquer código após a falha
-        throw new Error(errorMessage);
+        // Redireciona para página de erro amigável
+        router.push(
+            `/error?message=${encodeURIComponent(errorMessage)}&details=${encodeURIComponent(`{"error": "Erro de autenticação", "status": ${statusCode}}`)}`
+        );
+
+        throw new Error(errorDetails);
     }
 };

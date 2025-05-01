@@ -13,8 +13,9 @@ from middlewares.jwt_required_custom import jwt_required_custom
 from middlewares.tenant_required import tenant_required
 
 # Importar os Blueprints
-from blueprints.cardapio_routes import cardapio_bp
-from blueprints.painel_routes import painel_bp
+from blueprints.cardapio_routes import cardapio_api
+from blueprints.painel_routes import painel_api
+from blueprints.logs_routes import log_api
 
 load_dotenv()
 
@@ -50,8 +51,9 @@ db.init_app(app)
 migrate = Migrate(app, db)
 
 # Registrar os Blueprints
-app.register_blueprint(cardapio_bp)
-app.register_blueprint(painel_bp)
+app.register_blueprint(cardapio_api)
+app.register_blueprint(painel_api)
+app.register_blueprint(log_api)
 
 @app.route('/test_redis', methods=['GET'])
 def test_redis():

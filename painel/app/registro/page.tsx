@@ -367,7 +367,7 @@ export default function PaginaRegistro() {
                 </form>
                 <div className="text-center text-xs text-slate-700 mt-4">
                     <Paragraph text="Já tem uma conta?" className="text-xs inline mb-6 mr-1" />
-                    <LinkText href="/login" text="Acesse" />
+                    <LinkText href="/login" text="Acesse" className='text-blue-400' />
                 </div>
             </ContainerForm>
         </div>

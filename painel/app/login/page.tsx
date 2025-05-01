@@ -2,6 +2,7 @@
 
 import { useForm, Controller } from 'react-hook-form';
 import axios from 'axios';
+import { useEffect, useState } from "react";
 import { useRouter } from 'next/navigation'; // Importando o useRouter
 import Input from '../components/input';
 import Button from '../components/button';
@@ -21,7 +22,36 @@ export default function PaginaLogin() {
     },
   });
 
+  const [loading, setLoading] = useState(true); // Estado para controlar a tela de redirecionamento
   const router = useRouter(); // Inicializando o hook useRouter
+
+  useEffect(() => {
+    // Função para verificar se o usuário já está logado
+    const checkLogin = async () => {
+      try {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/painel/check_login`, {
+          withCredentials: true, // precisa para enviar o cookie JWT
+        });
+
+        if (response.status === 200) {
+          // Se está logado, redireciona para /delivery
+          router.push("/delivery");
+        }
+      } catch (error: any) {
+        // Se deu 401 (não logado), não faz nada e continua na página de login
+        if (error.response?.status === 401) {
+          // Usuário não autenticado, pode continuar na página
+          setLoading(false); // Para de carregar quando a verificação termina
+          return;
+        } else {
+          console.error("Erro ao verificar login:", error);
+          setLoading(false); // Para de carregar se houver erro na verificação
+        }
+      }
+    };
+
+    checkLogin();
+  }, [router]);
 
   const onSubmit = async (data: any) => {
     const { email, senha, lembrarSenha } = data;
@@ -52,11 +82,19 @@ export default function PaginaLogin() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-8">
+        <Title text="Redirecionando..." />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center">
       <ContainerForm>
         <Title text="Seja bem-vindo!" />
-        <Paragraph text="Entre com seu CNPJ e Senha" className="mb-6" />
+        <Paragraph text="Entre com seu E-mail e Senha" className="mb-6" />
 
         <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
           {/* Campo de E-mail */}
@@ -119,7 +157,6 @@ export default function PaginaLogin() {
             <Paragraph text="Não tem uma conta?" className="text-xs inline mb-6 mr-1" />
             <LinkText href="/registro" text="Registrar" className='text-blue-400' />
           </div>
-
         </form>
       </ContainerForm>
     </div>
