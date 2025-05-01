@@ -2,7 +2,8 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';  // Importa o hook de navegação do Next.js
-import Title from './components/title';  // Importa o componente de título
+import LoadingLine from './components/loading_line';
+
 
 function Home() {
   const router = useRouter();  // Hook para navegação
@@ -14,7 +15,7 @@ function Home() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8">
-      <Title text="Redirecionando..." />
+      <LoadingLine />
     </div>
   );
 }

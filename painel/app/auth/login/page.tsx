@@ -11,6 +11,7 @@ import Paragraph from '../../components/paragraph';
 import CheckboxText from '../../components/checkbox_text';
 import LinkText from '../../components/link_text';
 import ContainerForm from '../../components/container_form';
+import LoadingLine from '../../components/loading_line';
 
 export default function PaginaLogin() {
   const { control, handleSubmit, formState: { errors } } = useForm({
@@ -83,11 +84,11 @@ export default function PaginaLogin() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8">
-        <Title text="Redirecionando..." />
-      </div>
-    );
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-8">
+      <LoadingLine />
+    </div>
+  );
   }
 
   return (

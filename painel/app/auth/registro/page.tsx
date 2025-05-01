@@ -11,6 +11,7 @@ import Paragraph from '../../components/paragraph';
 import ContainerForm from '../../components/container_form';
 import CheckboxText from '../../components/checkbox_text';
 import LinkText from '../../components/link_text';
+import LoadingLine from '../../components/loading_line';
 
 export default function PaginaRegistro() {
 
@@ -166,10 +167,11 @@ export default function PaginaRegistro() {
     if (loading) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center p-8">
-                <Title text="Redirecionando..." />
+                <LoadingLine />
             </div>
         );
     }
+
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center">

@@ -7,6 +7,7 @@ import { protectRoute } from '../../utils/protect_route';
 import { getCookie } from '../../utils/cookies';
 import Paragraph from "../../components/paragraph";
 import Title from "../../components/title";
+import LoadingLine from '../../components/loading_line';
 
 const Delivery = () => {
   const [data, setData] = useState<{ message: string; store: string; store_type: string; client_name: string; client_email: string } | null>(null);
@@ -74,10 +75,6 @@ const Delivery = () => {
       </div>
     );
   }
-
-  const LoadingLine = () => (
-    <div className="fixed bottom-0 left-0 w-full h-1 bg-gray-300 animate-pulse"></div>
-  );
 
   if (!data) {
     return (
