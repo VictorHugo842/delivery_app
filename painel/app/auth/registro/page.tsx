@@ -4,13 +4,13 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import axios from 'axios';
-import Input from '../components/input';
-import Button from '../components/button';
-import Title from '../components/title';
-import Paragraph from '../components/paragraph';
-import ContainerForm from '../components/container_form';
-import CheckboxText from '../components/checkbox_text';
-import LinkText from '../components/link_text';
+import Input from '../../components/input';
+import Button from '../../components/button';
+import Title from '../../components/title';
+import Paragraph from '../../components/paragraph';
+import ContainerForm from '../../components/container_form';
+import CheckboxText from '../../components/checkbox_text';
+import LinkText from '../../components/link_text';
 
 export default function PaginaRegistro() {
     const [step, setStep] = useState(1);
@@ -118,7 +118,7 @@ export default function PaginaRegistro() {
             setSuccess('Registro realizado com sucesso!');
             console.log('Registro bem-sucedido:', response.data);
 
-            router.push('/delivery');  // Redireciona após o sucesso
+            router.push('/admin/delivery');  // Redireciona após o sucesso
         } catch (error: any) {
             if (axios.isAxiosError(error)) {
                 // Logar informações completas sobre o erro de Axios
@@ -367,7 +367,7 @@ export default function PaginaRegistro() {
                 </form>
                 <div className="text-center text-xs text-slate-700 mt-4">
                     <Paragraph text="Já tem uma conta?" className="text-xs inline mb-6 mr-1" />
-                    <LinkText href="/login" text="Acesse" className='text-blue-400' />
+                    <LinkText href="/auth/login" text="Acesse" className='text-blue-400' />
                 </div>
             </ContainerForm>
         </div>

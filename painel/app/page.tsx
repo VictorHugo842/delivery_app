@@ -9,7 +9,7 @@ function Home() {
 
   useEffect(() => {
     // Redireciona automaticamente para a página 'delivery' após o componente ser montado
-    router.push('/login');
+    router.push('/auth/login');
   }, [router]);
 
   return (

@@ -1,14 +1,12 @@
-// components/Delivery.tsx
 'use client';
 
 import { useEffect, useState } from "react";
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import { protectRoute } from '../utils/protect_route';
-import { getCookie } from '../utils/cookies';
-import Paragraph from "../components/paragraph";
-import Title from "../components/title";
-import LinkText from "../components/link_text";
+import { protectRoute } from '../../utils/protect_route';
+import { getCookie } from '../../utils/cookies';
+import Paragraph from "../../components/paragraph";
+import Title from "../../components/title";
 
 const Delivery = () => {
   const [data, setData] = useState<{ message: string; store: string; store_type: string; client_name: string; client_email: string } | null>(null);
@@ -63,7 +61,7 @@ const Delivery = () => {
 
       // Após logout, você pode redirecionar ou limpar o estado
       setData(null);
-      router.push("/login"); // Redireciona para a página de login
+      router.push("/auth/login"); // Redireciona para a página de login
 
     } catch (err: any) {
       const errorMessage = 'Ocorreu um erro ao tentar fazer logout.';
@@ -109,21 +107,21 @@ const Delivery = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8">
-      <h1 className="text-2xl font-bold mb-4">Loja: {data.store}</h1>
-      <p className="text-lg">Tipo de Estabelecimento: {data.store_type}</p>
-      <h2 className="text-xl font-semibold mt-4">Informações do Cliente</h2>
-      <p>Nome: {data.client_name}</p>
-      <p>Email: {data.client_email}</p>
+      <div className="min-h-screen flex flex-col items-center justify-center p-8">
+        <h1 className="text-2xl font-bold mb-4">Loja: {data.store}</h1>
+        <p className="text-lg">Tipo de Estabelecimento: {data.store_type}</p>
+        <h2 className="text-xl font-semibold mt-4">Informações do Cliente</h2>
+        <p>Nome: {data.client_name}</p>
+        <p>Email: {data.client_email}</p>
 
-      {/* Botão de Logout */}
-      <button
-        onClick={handleLogout}
-        className="mt-8 px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
-      >
-        Logout
-      </button>
-    </div>
+        {/* Botão de Logout */}
+        <button
+          onClick={handleLogout}
+          className="mt-8 px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+        >
+          Logout
+        </button>
+      </div>
   );
 };
 

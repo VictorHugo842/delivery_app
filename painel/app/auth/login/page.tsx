@@ -4,13 +4,13 @@ import { useForm, Controller } from 'react-hook-form';
 import axios from 'axios';
 import { useEffect, useState } from "react";
 import { useRouter } from 'next/navigation'; // Importando o useRouter
-import Input from '../components/input';
-import Button from '../components/button';
-import Title from '../components/title';
-import Paragraph from '../components/paragraph';
-import CheckboxText from '../components/checkbox_text';
-import LinkText from '../components/link_text';
-import ContainerForm from '../components/container_form';
+import Input from '../../components/input';
+import Button from '../../components/button';
+import Title from '../../components/title';
+import Paragraph from '../../components/paragraph';
+import CheckboxText from '../../components/checkbox_text';
+import LinkText from '../../components/link_text';
+import ContainerForm from '../../components/container_form';
 
 export default function PaginaLogin() {
   const { control, handleSubmit, formState: { errors } } = useForm({
@@ -35,7 +35,7 @@ export default function PaginaLogin() {
 
         if (response.status === 200) {
           // Se está logado, redireciona para /delivery
-          router.push("/delivery");
+          router.push("/admin/delivery");
         }
       } catch (error: any) {
         // Se deu 401 (não logado), não faz nada e continua na página de login
@@ -72,7 +72,7 @@ export default function PaginaLogin() {
       alert('Login realizado com sucesso!');
 
       // Redireciona para a página /delivery após o login bem-sucedido
-      router.push('/delivery');
+      router.push('/admin/delivery');
     } catch (error: any) {
       if (axios.isAxiosError(error)) {
         alert(error.response?.data?.msg || 'Erro ao fazer login');
@@ -155,7 +155,7 @@ export default function PaginaLogin() {
 
           <div className="text-center text-xs text-slate-700 mt-4">
             <Paragraph text="Não tem uma conta?" className="text-xs inline mb-6 mr-1" />
-            <LinkText href="/registro" text="Registrar" className='text-blue-400' />
+            <LinkText href="/auth/registro" text="Registrar" className='text-blue-400' />
           </div>
         </form>
       </ContainerForm>

@@ -36,7 +36,7 @@ export const protectRoute = async (router: any) => {
         // );
 
         // Redireciona para tela de login
-        router.push('/login');
+        router.push('/auth/login');
 
         throw new Error(errorDetails);
     }
