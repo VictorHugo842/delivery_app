@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from "react";
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import axios from 'axios';
@@ -13,10 +13,40 @@ import CheckboxText from '../../components/checkbox_text';
 import LinkText from '../../components/link_text';
 
 export default function PaginaRegistro() {
+
+    const [loading, setLoading] = useState(true); // Estado para controlar a tela de redirecionamento
     const [step, setStep] = useState(1);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const router = useRouter();
+
+    useEffect(() => {
+        // Função para verificar se o usuário já está logado
+        const checkLogin = async () => {
+            try {
+                const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/check_auth_tenant`, {
+                    withCredentials: true, // precisa para enviar o cookie JWT
+                });
+
+                if (response.status === 200) {
+                    // Se está logado, redireciona para /delivery
+                    router.push("/admin/delivery");
+                }
+            } catch (error: any) {
+                // Se deu 401 (não logado), não faz nada e continua na página de login
+                if (error.response?.status === 401) {
+                    // Usuário não autenticado, pode continuar na página
+                    setLoading(false); // Para de carregar quando a verificação termina
+                    return;
+                } else {
+                    console.error("Erro ao verificar login:", error);
+                    setLoading(false); // Para de carregar se houver erro na verificação
+                }
+            }
+        };
+
+        checkLogin();
+    }, [router]);
 
     const { control, handleSubmit, watch, getValues, trigger, formState: { errors } } = useForm({
         defaultValues: {
@@ -132,6 +162,14 @@ export default function PaginaRegistro() {
         }
 
     };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center p-8">
+                <Title text="Redirecionando..." />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center">

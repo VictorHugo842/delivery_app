@@ -16,8 +16,7 @@ const Delivery = () => {
   useEffect(() => {
     const fetchData = async () => {
 
-      // Protege a rota antes de fazer qualquer requisição
-      // Isso garante que o usuário esteja autenticado antes de acessar a página
+      // JÁ É PROTEGIDO NO PRÓPRIO LAYOUT, AQUI GARANTE NOVAMENTE.
       try {
         await protectRoute(router);
       } catch (err: any) {

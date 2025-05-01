@@ -1,10 +1,38 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { protectRoute } from '../utils/protect_route'; // ajuste o caminho conforme seu projeto
 import Paragraph from "../components/paragraph";
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+
+  // Estado para saber se a autenticação já foi validada
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
+
+  useEffect(() => {
+
+    // Protege a rota antes de fazer qualquer requisição
+    // Isso garante que o usuário esteja autenticado antes de acessar a página
+    const checkAuth = async () => {
+      try {
+        await protectRoute(router);
+      } catch (err) {
+        // O protectRoute já redireciona
+        return;
+      }
+      setIsAuthChecked(true); // Se passou na autenticação, libera o layout
+    };
+
+    checkAuth();
+  }, []);
+
+  // Enquanto não autentica, retorna null (ou um loader, se quiser)
+  if (!isAuthChecked) {
+    return null;
+  }
+
   return (
     <>
       {/* Navbar Vertical */}
