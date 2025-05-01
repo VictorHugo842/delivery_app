@@ -29,7 +29,7 @@ export default function PaginaLogin() {
     // Função para verificar se o usuário já está logado
     const checkLogin = async () => {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/check_auth`, {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/check_auth_tenant`, {
           withCredentials: true, // precisa para enviar o cookie JWT
         });
 

@@ -64,9 +64,26 @@ const Delivery = () => {
       // Após logout, você pode redirecionar ou limpar o estado
       setData(null);
       router.push("/login"); // Redireciona para a página de login
+
     } catch (err: any) {
-      const errorMessage = err.response?.data?.msg || err.message;
-      setError(errorMessage);
+      const errorMessage = 'Ocorreu um erro ao tentar fazer logout.';
+      const statusCode = err?.response?.status || 500; // Pega o status ou assume 500
+      const errorDetails = err?.response?.data?.msg || err.message;
+
+      // Envia o log de erro
+      axios
+        .post(`${process.env.NEXT_PUBLIC_API_URL}/log/log_error`, {
+          message: 'Erro ao tentar fazer logout',
+          details: errorDetails,
+        })
+        .catch((logErr) => {
+          console.error('Erro ao enviar log para Flask:', logErr);
+        });
+
+      // Redireciona para a página de erro com detalhes do erro
+      router.push(
+        `/error?message=${encodeURIComponent(errorMessage)}&details=${encodeURIComponent(`{"error": "Erro de logout", "status": ${statusCode}}`)}`
+      );
     }
   };
 

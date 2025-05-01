@@ -6,7 +6,7 @@ export const protectRoute = async (router: any) => {
         const csrfToken = getCookie('csrf_access_token');
 
         await axios.post(
-            `${process.env.NEXT_PUBLIC_API_URL}/auth/check_auth`,
+            `${process.env.NEXT_PUBLIC_API_URL}/auth/check_auth_tenant`,
             {},
             {
                 withCredentials: true,
