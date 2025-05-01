@@ -30,10 +30,13 @@ export const protectRoute = async (router: any) => {
                 console.error('Erro ao enviar log para Flask:', logErr);
             });
 
-        // Redireciona para página de erro amigável
-        router.push(
-            `/error?message=${encodeURIComponent(errorMessage)}&details=${encodeURIComponent(`{"error": "Erro de autenticação", "status": ${statusCode}}`)}`
-        );
+        // Comenta o redirecionamento para página de erro e redireciona para a tela de login
+        // router.push(
+        //     `/error?message=${encodeURIComponent(errorMessage)}&details=${encodeURIComponent(`{"error": "Erro de autenticação", "status": ${statusCode}}`)}`
+        // );
+
+        // Redireciona para tela de login
+        router.push('/login');
 
         throw new Error(errorDetails);
     }
