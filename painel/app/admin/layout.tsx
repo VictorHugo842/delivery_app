@@ -1,12 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { protectRoute } from '../utils/protect_route'; // ajuste o caminho conforme seu projeto
 import Paragraph from "../components/paragraph";
+import Link from 'next/link';
+
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const activePage = pathname?.split('/')[2];
 
   // Estado para saber se a autenticação já foi validada
   const [isAuthChecked, setIsAuthChecked] = useState(false);
@@ -32,7 +36,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (!isAuthChecked) {
     return null;
   }
-
   return (
     <>
       {/* Navbar Vertical */}
@@ -45,31 +48,45 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         <nav className="flex flex-col items-center space-y-6">
-          <a href="/admin/delivery" className="flex flex-col items-center text-sm space-y-1 text-gray-600 group">
-            <span className="material-icons-round group-hover:text-red-500 group-hover:scale-110 transition-transform duration-300">
+          {/* DELIVERY */}
+          <Link href="/admin/delivery" className="flex flex-col items-center text-sm space-y-1 text-gray-600 group">
+            <span className={`material-icons-round group-hover:text-red-500 group-hover:scale-110 transition-transform duration-300 ${activePage === 'delivery' ? 'text-red-500' : ''}`}>
               sports_motorsports
             </span>
-            <Paragraph text="Delivery" className="font-semibold text-[10px] group-hover:text-red-500" />
-          </a>
+            <Paragraph
+              text="Delivery"
+              className={`font-semibold text-[10px] group-hover:text-red-500 ${activePage === 'delivery' ? 'text-red-500' : ''}`}
+            />
+          </Link>
 
-          <a href="/admin/historico" className="flex flex-col items-center text-sm space-y-1 text-gray-600 group">
-            <span className="material-icons-round group-hover:text-red-500 group-hover:scale-110 transition-transform duration-300">
+          {/* HISTÓRICO */}
+          <Link href="/admin/historico" className="flex flex-col items-center text-sm space-y-1 text-gray-600 group">
+            <span className={`material-icons-round group-hover:text-red-500 group-hover:scale-110 transition-transform duration-300 ${activePage === 'historico' ? 'text-red-500' : ''}`}>
               history
             </span>
-            <Paragraph text="Histórico" className="font-semibold text-[10px] group-hover:text-red-500" />
-          </a>
+            <Paragraph
+              text="Histórico"
+              className={`font-semibold text-[10px] group-hover:text-red-500 ${activePage === 'historico' ? 'text-red-500' : ''}`}
+            />
+          </Link>
 
-          <a href="/admin/ajustes" className="flex flex-col items-center text-sm space-y-1 text-gray-600 group">
-            <span className="material-icons-round group-hover:text-red-500 group-hover:scale-110 transition-transform duration-300">
+          {/* AJUSTES */}
+          <Link href="/admin/ajustes" className="flex flex-col items-center text-sm space-y-1 text-gray-600 group">
+            <span className={`material-icons-round group-hover:text-red-500 group-hover:scale-110 transition-transform duration-300 ${activePage === 'ajustes' ? 'text-red-500' : ''}`}>
               settings
             </span>
-            <Paragraph text="Ajustes" className="font-semibold text-[10px] group-hover:text-red-500" />
-          </a>
+            <Paragraph
+              text="Ajustes"
+              className={`font-semibold text-[10px] group-hover:text-red-500 ${activePage === 'ajustes' ? 'text-red-500' : ''}`}
+            />
+          </Link>
         </nav>
+
       </header>
 
       {/* Conteúdo Principal */}
       <main className="pl-16 pt-4">{children}</main>
     </>
   );
+
 }

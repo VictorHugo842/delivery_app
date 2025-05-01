@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { protectRoute } from '../../utils/protect_route';
@@ -13,114 +13,96 @@ const Delivery = () => {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchData = async () => {
-
-      // JÁ É PROTEGIDO NO PRÓPRIO LAYOUT, AQUI GARANTE NOVAMENTE.
-      try {
-        await protectRoute(router);
-      } catch (err: any) {
-        // O próprio protectRoute já faz o push para /error, então só retorna
-        return;
-      }
-
-      try {
-        // Faz a requisição para obter os dados do painel de delivery
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/painel/delivery`, {
-          withCredentials: true,
-        });
-
-        setData(response.data);
-      } catch (err: any) {
-        const errorMessage = err.response?.data?.msg || err.message;
-        setError(errorMessage);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-
-  const handleLogout = async () => {
+  const fetchData = useCallback(async () => {
+    // Já é protegido no layout, aqui reforça a proteção
     try {
-      // Pega o CSRF Token do cookie
-      const csrfToken = getCookie('csrf_access_token');
+      await protectRoute(router);
+    } catch (err: any) {
+      // O protectRoute já cuida do redirecionamento, então saímos da função aqui
+      return;
+    }
 
-      // Faz a requisição de logout, enviando o CSRF Token no cabeçalho
+    try {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/painel/delivery`, {
+        withCredentials: true,
+      });
+      setData(response.data);
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.msg || err.message;
+      setError(errorMessage);
+    }
+  }, [router]);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      const csrfToken = getCookie('csrf_access_token');
       await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/painel/logout`,
         {},
         {
-          withCredentials: true,  // Importante enviar os cookies na requisição
+          withCredentials: true,
           headers: {
-            'X-CSRF-Token': csrfToken || '', // Envia o CSRF Token no cabeçalho
+            'X-CSRF-Token': csrfToken || '',
           },
         }
       );
-
-      // Após logout, você pode redirecionar ou limpar o estado
       setData(null);
-      router.push("/auth/login"); // Redireciona para a página de login
-
+      router.push("/auth/login");
     } catch (err: any) {
-      const errorMessage = 'Ocorreu um erro ao tentar fazer logout.';
-      const statusCode = err?.response?.status || 500; // Pega o status ou assume 500
+      const errorMessage = 'Erro ao tentar fazer logout';
+      const statusCode = err?.response?.status || 500;
       const errorDetails = err?.response?.data?.msg || err.message;
-
-      // Envia o log de erro
-      axios
-        .post(`${process.env.NEXT_PUBLIC_API_URL}/log/log_error`, {
-          message: 'Erro ao tentar fazer logout',
-          details: errorDetails,
-        })
-        .catch((logErr) => {
-          console.error('Erro ao enviar log para Flask:', logErr);
-        });
-
-      // Redireciona para a página de erro com detalhes do erro
-      router.push(
-        `/error?message=${encodeURIComponent(errorMessage)}&details=${encodeURIComponent(`{"error": "Erro de logout", "status": ${statusCode}}`)}`
-      );
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/log/log_error`, {
+        message: errorMessage,
+        details: errorDetails,
+      }).catch(logErr => {
+        console.error('Erro ao enviar log para Flask:', logErr);
+      });
+      router.push(`/error?message=${encodeURIComponent(errorMessage)}&details=${encodeURIComponent(`{"error": "Erro de logout", "status": ${statusCode}}`)}`);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8">
         <Title className="text-red-500" text="Erro ao carregar dados" />
-        <Paragraph
-          text={error}
-          className="text-lg"
-        />
+        <Paragraph text={error} className="text-lg" />
       </div>
     );
   }
+
+  const LoadingLine = () => (
+    <div className="fixed bottom-0 left-0 w-full h-1 bg-gray-300 animate-pulse"></div>
+  );
 
   if (!data) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8">
-        <Title text="Carregando..." />
+        <LoadingLine />
       </div>
     );
-
   }
 
   return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8">
-        <h1 className="text-2xl font-bold mb-4">Loja: {data.store}</h1>
-        <p className="text-lg">Tipo de Estabelecimento: {data.store_type}</p>
-        <h2 className="text-xl font-semibold mt-4">Informações do Cliente</h2>
-        <p>Nome: {data.client_name}</p>
-        <p>Email: {data.client_email}</p>
+    <div className="min-h-screen flex flex-col items-center justify-center p-8">
+      <h1 className="text-2xl font-bold mb-4">Loja: {data.store}</h1>
+      <p className="text-lg">Tipo de Estabelecimento: {data.store_type}</p>
+      <h2 className="text-xl font-semibold mt-4">Informações do Cliente</h2>
+      <p>Nome: {data.client_name}</p>
+      <p>Email: {data.client_email}</p>
 
-        {/* Botão de Logout */}
-        <button
-          onClick={handleLogout}
-          className="mt-8 px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
-        >
-          Logout
-        </button>
-      </div>
+      {/* Botão de Logout */}
+      <button
+        onClick={handleLogout}
+        className="mt-8 px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+      >
+        Logout
+      </button>
+    </div>
   );
 };
 

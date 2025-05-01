@@ -4,6 +4,5 @@ interface ParagraphProps {
 }
 
 export default function Paragraph({ text, className = '' }: ParagraphProps) {
-    return <p className={`text-slate-800 text-sm ${className}`}>{text}</p>;
-
+    return <p className={`text-sm ${className || 'text-slate-800'}`}>{text}</p>;
 }
