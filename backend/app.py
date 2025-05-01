@@ -9,13 +9,14 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_jwt_extended import JWTManager
 from extensions import db, redis
-from middlewares.jwt_required_custom import jwt_required_custom
-from middlewares.tenant_required import tenant_required
+from decorators.jwt_required_custom import jwt_required_custom
+from decorators.tenant_required import tenant_required
 
 # Importar os Blueprints
 from blueprints.cardapio_routes import cardapio_api
 from blueprints.painel_routes import painel_api
 from blueprints.logs_routes import log_api
+from blueprints.auth_routes import auth_api
 
 load_dotenv()
 
@@ -54,6 +55,7 @@ migrate = Migrate(app, db)
 app.register_blueprint(cardapio_api)
 app.register_blueprint(painel_api)
 app.register_blueprint(log_api)
+app.register_blueprint(auth_api)
 
 @app.route('/test_redis', methods=['GET'])
 def test_redis():

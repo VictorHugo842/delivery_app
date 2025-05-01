@@ -5,8 +5,8 @@ from models.usuario_painel import UsuarioPainel
 from models.loja import Loja
 from slugify import slugify
 from werkzeug.security import generate_password_hash, check_password_hash  # para segurança de senha
-from middlewares.jwt_required_custom import jwt_required_custom
-from middlewares.tenant_required import tenant_required
+from decorators.jwt_required_custom import jwt_required_custom
+from decorators.tenant_required import tenant_required
 from flask_jwt_extended import (
     JWTManager, create_access_token, jwt_required,
     get_jwt_identity, set_access_cookies, unset_jwt_cookies,
@@ -26,17 +26,7 @@ painel_api = Blueprint('painel', __name__, url_prefix='/painel')
 #         'message': f'This painel page has been visited {hits.decode()} times.'
 #     })
 
-@painel_api.route("/check_login", methods=["GET"])
-@jwt_required_custom
-@tenant_required
-def check_login():
-    return jsonify({"msg": "Usuário autenticado", "logged_in": True}), 200
 
-@painel_api.route("/protect_route", methods=["GET","POST"])
-@jwt_required_custom
-@tenant_required
-def protect_route():
-    return jsonify({"message": "Acesso permitido!"}), 200
 
 @painel_api.route("/delivery", methods=["GET"])
 @jwt_required_custom

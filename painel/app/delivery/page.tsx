@@ -88,7 +88,7 @@ const Delivery = () => {
         <Title text="Carregando..." />
       </div>
     );
-    
+
   }
 
   return (

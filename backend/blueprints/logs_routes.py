@@ -3,7 +3,7 @@ from flask import Blueprint, request, jsonify
 import logging
 import os
 
-log_api = Blueprint('log_api', __name__, url_prefix='/logs')
+log_api = Blueprint('logs', __name__, url_prefix='/logs')
 
 # Garante que a pasta 'logs' exista
 os.makedirs('logs', exist_ok=True)
