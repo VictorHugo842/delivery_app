@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { protectRoute } from '../../utils/protect_route';
@@ -10,33 +10,46 @@ import Title from "../../components/title";
 import LoadingLine from '../../components/loading_line';
 
 const Delivery = () => {
-  const [data, setData] = useState<{ message: string; store: string; store_type: string; client_name: string; client_email: string } | null>(null);
+  const [data, setData] = useState<{
+    message: string;
+    store: string;
+    store_type: string;
+    client_name: string;
+    client_email: string;
+  } | null>(null);
+
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const fetchData = useCallback(async () => {
-    // Já é protegido no layout, aqui reforça a proteção
-    try {
-      await protectRoute(router);
-    } catch (err: any) {
-      // O protectRoute já cuida do redirecionamento, então saímos da função aqui
-      return;
-    }
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Já é protegido no layout, aqui garante novamente
+        await protectRoute(router);
+      } catch (err: any) {
+        return; // protectRoute já redireciona
+      }
 
-    try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/painel/delivery`, {
-        withCredentials: true,
-      });
-      setData(response.data);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.msg || err.message;
-      setError(errorMessage);
-    }
+      try {
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/painel/delivery`,
+          { withCredentials: true }
+        );
+
+        setData(response.data);
+      } catch (err: any) {
+        const errorMessage = err.response?.data?.msg || err.message;
+        setError(errorMessage);
+      }
+    };
+
+    fetchData();
   }, [router]);
 
-  const handleLogout = useCallback(async () => {
+  const handleLogout = async () => {
     try {
       const csrfToken = getCookie('csrf_access_token');
+
       await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/painel/logout`,
         {},
@@ -47,25 +60,32 @@ const Delivery = () => {
           },
         }
       );
+
       setData(null);
       router.push("/auth/login");
     } catch (err: any) {
-      const errorMessage = 'Erro ao tentar fazer logout';
+      const errorMessage = 'Ocorreu um erro ao tentar fazer logout.';
       const statusCode = err?.response?.status || 500;
       const errorDetails = err?.response?.data?.msg || err.message;
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/log/log_error`, {
-        message: errorMessage,
-        details: errorDetails,
-      }).catch(logErr => {
-        console.error('Erro ao enviar log para Flask:', logErr);
-      });
-      router.push(`/error?message=${encodeURIComponent(errorMessage)}&details=${encodeURIComponent(`{"error": "Erro de logout", "status": ${statusCode}}`)}`);
-    }
-  }, [router]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+      // Envia log de erro
+      axios
+        .post(`${process.env.NEXT_PUBLIC_API_URL}/log/log_error`, {
+          message: 'Erro ao tentar fazer logout',
+          details: errorDetails,
+        })
+        .catch((logErr) => {
+          console.error('Erro ao enviar log para Flask:', logErr);
+        });
+
+      // Redireciona para página de erro
+      router.push(
+        `/error?message=${encodeURIComponent(errorMessage)}&details=${encodeURIComponent(
+          JSON.stringify({ error: "Erro de logout", status: statusCode })
+        )}`
+      );
+    }
+  };
 
   if (error) {
     return (
@@ -92,7 +112,6 @@ const Delivery = () => {
       <p>Nome: {data.client_name}</p>
       <p>Email: {data.client_email}</p>
 
-      {/* Botão de Logout */}
       <button
         onClick={handleLogout}
         className="mt-8 px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
