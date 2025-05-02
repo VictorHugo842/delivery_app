@@ -176,7 +176,7 @@ export default function PaginaRegistro() {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center">
             <ContainerForm>
-                <Title text="Crie sua conta" />
+                <Title className="font-semibold" text="Crie sua conta" />
                 <Paragraph
                     text={step === 1 ? 'Fala um pouco sobre você.' : step === 2 ? 'Queremos conhecer seu negócio.' : 'Defina sua senha.'}
                     className="mb-6"
@@ -391,23 +391,38 @@ export default function PaginaRegistro() {
 
                     <div className="flex justify-between">
                         {step > 1 && (
-                            <Button type="button" text="Voltar" onClick={handleVoltar} className="bg-gray-300 hover:bg-gray-400 text-black py-2 px-4 rounded-lg" />
+                            <button
+                                type="button"
+                                onClick={handleVoltar}
+                                className="flex items-center text-lg text-[#ea1d2c]"
+                            >
+                                <span className="material-icons-round">arrow_back</span> {/* Ícone de seta para voltar */}
+                            </button>
                         )}
 
                         {step < 3 ? (
-                            <Button type="button" text="Próximo" onClick={handleProximo} className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg" />
-                        ) : (
-                            <Button
+                            <button
                                 type="button"
-                                text="Finalizar"
+                                onClick={handleProximo}
+                                className="flex items-center text-lg text-[#ea1d2c]"
+                            >
+                                <span className="material-icons-round cursor-pointer">arrow_forward</span> {/* Ícone de seta para próximo */}
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
                                 onClick={handleFinalizar}
-                                className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg"
-                            />)}
+                                className="flex items-center text-lg text-[#ea1d2c]"
+                            >
+                                <span className="material-icons-round">check_circle</span> {/* Ícone para finalizar */}
+
+                            </button>
+                        )}
                     </div>
                 </form>
                 <div className="text-center text-xs text-slate-700 mt-4">
                     <Paragraph text="Já tem uma conta?" className="text-xs inline mb-6 mr-1" />
-                    <LinkText href="/auth/login" text="Acesse" className='text-blue-400' />
+                    <LinkText href="/auth/login" text="Acesse" className='text-blue-400 text-xs hover:underline' />
                 </div>
             </ContainerForm>
         </div>

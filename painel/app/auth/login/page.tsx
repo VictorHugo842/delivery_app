@@ -84,17 +84,17 @@ export default function PaginaLogin() {
   };
 
   if (loading) {
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8">
-      <LoadingLine />
-    </div>
-  );
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-8">
+        <LoadingLine />
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center">
       <ContainerForm>
-        <Title text="Seja bem-vindo!" />
+        <Title className="font-semibold" text="Seja bem-vindo!" />
         <Paragraph text="Entre com seu E-mail e Senha" className="mb-6" />
 
         <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
@@ -137,7 +137,7 @@ export default function PaginaLogin() {
           />
 
           {/* Checkbox "Lembrar-me" */}
-          <div className="flex justify-between items-center">
+          {/* <div className="flex justify-between items-center">
             <Controller
               name="lembrarSenha"
               control={control}
@@ -149,14 +149,15 @@ export default function PaginaLogin() {
                 />
               )}
             />
-            <LinkText href="/por-rota-pra-redefinir" text="Esqueceu a senha?" className='text-blue-400' />
-          </div>
+           <LinkText href="/por-rota-pra-redefinir" text="Esqueceu a senha?" className='text-blue-400 text-xs hover:underline' /> 
+          </div> */}
+
 
           <Button type="submit" text="Entrar" />
 
           <div className="text-center text-xs text-slate-700 mt-4">
             <Paragraph text="Não tem uma conta?" className="text-xs inline mb-6 mr-1" />
-            <LinkText href="/auth/registro" text="Registrar" className='text-blue-400' />
+            <LinkText href="/auth/registro" text="Registrar" className='text-blue-400 text-xs hover:underline' />
           </div>
         </form>
       </ContainerForm>

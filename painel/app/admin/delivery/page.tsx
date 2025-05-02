@@ -90,7 +90,7 @@ const Delivery = () => {
   if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-8">
-        <Title className="text-red-500" text="Erro ao carregar dados" />
+        <Title className="text-[#ea1d2c] font-semibold" text="Erro ao carregar dados" />
         <Paragraph text={error} className="text-lg" />
       </div>
     );

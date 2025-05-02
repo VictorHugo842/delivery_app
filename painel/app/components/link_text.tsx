@@ -2,19 +2,20 @@ import React from 'react';
 
 interface LinkTextProps {
     href: string;
-    text: string;
+    text?: string; // Agora text é opcional
     className?: string;
-    onClick?: () => void; // Adiciona a propriedade onClick
+    onClick?: () => void;
+    children?: React.ReactNode; // Aceita children
 }
 
-export default function LinkText({ href, text, className = '', onClick }: LinkTextProps) {
+export default function LinkText({ href, text, className = '', onClick, children }: LinkTextProps) {
     return (
         <a
             href={href}
-            className={`text-xs transition cursor-pointer hover:underline ${className}`}
-            onClick={onClick} // Adiciona o evento onClick
+            className={`transition cursor-pointer ${className}`}
+            onClick={onClick}
         >
-            {text}
+            {children || text}
         </a>
     );
 }

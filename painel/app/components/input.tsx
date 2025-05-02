@@ -77,7 +77,7 @@ export default function Input({
             )}
 
             {error && (
-                <p className="text-red-500 text-xs mt-1">{error.message}</p>
+                <p className="text-[#ea1d2c] text-xs mt-1">{error.message}</p>
             )}
         </div>
     );

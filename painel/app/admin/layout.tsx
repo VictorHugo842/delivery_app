@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { protectRoute } from '../utils/protect_route'; // ajuste o caminho conforme seu projeto
 import Paragraph from "../components/paragraph";
 import Link from 'next/link';
-
+import Image from 'next/image'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -32,7 +32,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     checkAuth();
   }, []);
 
-  // Enquanto não autentica, retorna null (ou um loader, se quiser)
+  // Enquanto não autentica, retorna null
   if (!isAuthChecked) {
     return null;
   }
@@ -42,42 +42,49 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <header className="text-black p-4 fixed top-0 left-0 h-full w-14 bg-white drop-shadow-[4px_0_6px_rgba(0,0,0,0.1)] flex flex-col items-center">
         <div className="mt-4 mb-8">
           {/* Logo */}
-          <div className="text-3xl">
-            <span className="material-icons-round text-red-500">fastfood</span>
+          <div className="w-10 h-10 relative mx-auto">
+            <Image
+              src="/logo3.svg"
+              alt="Logo"
+              fill
+              className="object-contain rounded-lg"
+              priority
+            />
           </div>
         </div>
 
+
         <nav className="flex flex-col items-center space-y-6">
           {/* DELIVERY */}
-          <Link href="/admin/delivery" className="flex flex-col items-center text-sm space-y-1 text-gray-600 group">
-            <span className={`material-icons-round group-hover:text-red-500 group-hover:scale-110 transition-transform duration-300 ${activePage === 'delivery' ? 'text-red-500' : ''}`}>
+          <Link href="/admin/delivery" className="flex flex-col items-center text-sm space-y-1 text-gray-500 group">
+            <span className={`material-icons-round group-hover:text-[#ea1d2c] group-hover:scale-110 transition-transform duration-300 ${activePage === 'delivery' ? 'text-[#ea1d2c]' : ''}`}>
               sports_motorsports
             </span>
             <Paragraph
               text="Delivery"
-              className={`font-semibold text-[10px] group-hover:text-red-500 ${activePage === 'delivery' ? 'text-red-500' : ''}`}
+              className={`font-bold text-[10px] group-hover:text-[#ea1d2c] ${activePage === 'delivery' ? 'text-[#ea1d2c]' : ''}`}
             />
           </Link>
 
           {/* HISTÓRICO */}
-          <Link href="/admin/historico" className="flex flex-col items-center text-sm space-y-1 text-gray-600 group">
-            <span className={`material-icons-round group-hover:text-red-500 group-hover:scale-110 transition-transform duration-300 ${activePage === 'historico' ? 'text-red-500' : ''}`}>
+          <Link href="/admin/historico" className="flex flex-col items-center text-sm space-y-1 text-gray-500 group">
+            <span className={`material-icons-round group-hover:text-[#ea1d2c] group-hover:scale-110 transition-transform duration-300 ${activePage === 'historico' ? 'text-[#ea1d2c]' : ''}`}>
               history
             </span>
             <Paragraph
               text="Histórico"
-              className={`font-semibold text-[10px] group-hover:text-red-500 ${activePage === 'historico' ? 'text-red-500' : ''}`}
+              className={`font-bold text-[10px] group-hover:text-[#ea1d2c] ${activePage === 'historico' ? 'text-[#ea1d2c]' : ''}`}
             />
           </Link>
 
           {/* AJUSTES */}
-          <Link href="/admin/ajustes" className="flex flex-col items-center text-sm space-y-1 text-gray-600 group">
-            <span className={`material-icons-round group-hover:text-red-500 group-hover:scale-110 transition-transform duration-300 ${activePage === 'ajustes' ? 'text-red-500' : ''}`}>
+          <Link href="/admin/ajustes" className="flex flex-col items-center text-sm space-y-1 text-gray-500 group">
+            <span className={`material-icons-round group-hover:text-[#ea1d2c] group-hover:scale-110 transition-transform duration-300 ${activePage === 'ajustes' ? 'text-[#ea1d2c]' : ''}`}>
               settings
             </span>
             <Paragraph
               text="Ajustes"
-              className={`font-semibold text-[10px] group-hover:text-red-500 ${activePage === 'ajustes' ? 'text-red-500' : ''}`}
+              className={`font-bold text-[10px] group-hover:text-[#ea1d2c] ${activePage === 'ajustes' ? 'text-[#ea1d2c]' : ''}`}
             />
           </Link>
         </nav>

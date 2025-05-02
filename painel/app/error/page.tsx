@@ -42,7 +42,7 @@ const ErrorPage = () => {
                         href="#"
                         text="Ver detalhes"
                         onClick={() => setShowDetails(!showDetails)} // Alterna a exibição dos detalhes
-                        className=' text-red-500 font-bold'
+                        className=' text-[#ea1d2c] font-bold text-xs hover:underline'
                     />
                 </div>
 
@@ -60,7 +60,7 @@ const ErrorPage = () => {
                     <LinkText
                         href="/auth/login"
                         text="Acesse sua conta"
-                        className=' text-blue-400'
+                        className=' text-blue-400 text-xs hover:underline'
                     />
                 </div> */}
             </ContainerForm>
