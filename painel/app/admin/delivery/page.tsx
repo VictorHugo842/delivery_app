@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import { protectRoute } from '../../utils/protect_route';
 import { getCookie } from '../../utils/cookies';
 import Paragraph from "../../components/paragraph";
 import Title from "../../components/title";
 import LoadingLine from '../../components/loading_line';
+import withAuth from '../../hoc/with_auth'; //
 
 const Delivery = () => {
   const [data, setData] = useState<{
@@ -24,13 +24,6 @@ const Delivery = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Já é protegido no layout, aqui garante novamente
-        await protectRoute(router);
-      } catch (err: any) {
-        return; // protectRoute já redireciona
-      }
-
-      try {
         const response = await axios.get(
           `${process.env.NEXT_PUBLIC_API_URL}/painel/delivery`,
           { withCredentials: true }
@@ -44,7 +37,7 @@ const Delivery = () => {
     };
 
     fetchData();
-  }, [router]);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -122,4 +115,5 @@ const Delivery = () => {
   );
 };
 
-export default Delivery;
+// Exporta com proteção
+export default withAuth(Delivery);

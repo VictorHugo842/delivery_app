@@ -1,13 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import Title from '../../components/title';
 import Image from 'next/image';
 import LinkText from '../../components/link_text';
 import Paragraph from '../../components/paragraph';
-import { protectRoute } from '../../utils/protect_route';
+import withAuth from '../../hoc/with_auth'; // Importa o HOC
 
 const Ajustes = () => {
     const [data, setData] = useState<{
@@ -22,18 +21,9 @@ const Ajustes = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
 
-    const router = useRouter();
-
-    // Protege a rota
+    // Busca os dados da loja
     useEffect(() => {
         const fetchData = async () => {
-            try {
-                // Já é protegido no layout, aqui garante novamente
-                await protectRoute(router);
-            } catch (err: any) {
-                return; // protectRoute já redireciona
-            }
-
             try {
                 const response = await axios.get(
                     `${process.env.NEXT_PUBLIC_API_URL}/painel/delivery`,
@@ -48,7 +38,7 @@ const Ajustes = () => {
         };
 
         fetchData();
-    }, [router]);
+    }, []);
 
     // Trava o scroll do body quando o modal abre
     useEffect(() => {
@@ -156,7 +146,6 @@ const Ajustes = () => {
                                     <p>Nome da Loja: {data.store}</p>
                                     <p>Email: {data.client_email}</p>
                                     <p>Tipo de Loja: {data.store_type}</p>
-
                                 </>
                             )}
                         </div>
@@ -167,4 +156,5 @@ const Ajustes = () => {
     );
 };
 
-export default Ajustes;
+// Protege a página usando o HOC
+export default withAuth(Ajustes);
