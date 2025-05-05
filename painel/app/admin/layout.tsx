@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { protectRoute } from '../utils/protect_route'; // ajuste o caminho conforme seu projeto
+import { protectRoute } from '../utils/protect_route';
 import Paragraph from "../components/paragraph";
 import Link from 'next/link';
 import Image from 'next/image'

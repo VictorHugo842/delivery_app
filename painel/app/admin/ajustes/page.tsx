@@ -1,29 +1,54 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import axios from 'axios';
 import Title from '../../components/title';
 import Image from 'next/image';
 import LinkText from '../../components/link_text';
 import Paragraph from '../../components/paragraph';
+import { protectRoute } from '../../utils/protect_route';
 
-function Ajustes() {
+const Ajustes = () => {
+    const [data, setData] = useState<{
+        message: string;
+        store: string;
+        store_type: string;
+        client_name: string;
+        client_email: string;
+    } | null>(null);
+
+    const [error, setError] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
 
-    const openModal = () => {
-        setIsModalOpen(true);
-        // Aguarda próximo tick para aplicar classe de transição
-        setTimeout(() => {
-            setIsVisible(true);
-        }, 10); // Delay mínimo para dar tempo do modal montar antes da transição
-    };
+    const router = useRouter();
 
-    const closeModal = () => {
-        setIsVisible(false);
-        setTimeout(() => {
-            setIsModalOpen(false);
-        }, 300); // Tempo da transição
-    };
+    // Protege a rota
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                // Já é protegido no layout, aqui garante novamente
+                await protectRoute(router);
+            } catch (err: any) {
+                return; // protectRoute já redireciona
+            }
+
+            try {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/painel/delivery`,
+                    { withCredentials: true }
+                );
+
+                setData(response.data);
+            } catch (err: any) {
+                const errorMessage = err.response?.data?.msg || err.message;
+                setError(errorMessage);
+            }
+        };
+
+        fetchData();
+    }, [router]);
 
     // Trava o scroll do body quando o modal abre
     useEffect(() => {
@@ -32,15 +57,25 @@ function Ajustes() {
         } else {
             document.body.style.overflow = '';
         }
-
         return () => {
             document.body.style.overflow = '';
         };
     }, [isModalOpen]);
 
+    // Função para abrir e buscar os dados
+    const openModal = async () => {
+        setIsModalOpen(true);
+        setTimeout(() => setIsVisible(true), 10);
+    };
+
+    const closeModal = () => {
+        setIsVisible(false);
+        setTimeout(() => setIsModalOpen(false), 300);
+    };
+
     return (
         <div className="min-h-screen p-5">
-            {/* Título com margem */}
+            {/* Título */}
             <div className="mb-4">
                 <Title className="text-xl font-bold text-gray-800" text="Ajustes" />
             </div>
@@ -48,9 +83,7 @@ function Ajustes() {
             {/* Perfil */}
             <Title className="text-lg font-semibold text-gray-800" text="Perfil" />
 
-            {/* Cards lado a lado */}
             <div className="flex items-center gap-4 mb-6">
-                {/* Logo quadrado */}
                 <div className="w-22 h-22 bg-gray-200 rounded-lg flex items-center justify-center">
                     <Image
                         src="/logo.png"
@@ -62,9 +95,10 @@ function Ajustes() {
                     />
                 </div>
 
-                {/* Informações ao lado */}
                 <div className="flex flex-col">
-                    <p className="text-sm font-bold text-gray-800 mb-1">Doceria</p>
+                    <p className="text-sm font-bold text-gray-800 mb-1">
+                        {data?.store_type ? data.store_type : 'Carregando...'}
+                    </p>
                     <LinkText
                         href="#"
                         onClick={openModal}
@@ -74,95 +108,63 @@ function Ajustes() {
                             text="Mostrar perfil"
                             className="font-bold text-[#eb445f]"
                         />
-                        <span className="material-icons-round text-[#eb445f] ml-2">arrow_forward</span>
+                        <span className="material-icons-round text-[#eb445f] ml-2">
+                            arrow_forward
+                        </span>
                     </LinkText>
                 </div>
             </div>
 
-            {/* Slide-in Modal */}
+            {/* Modal */}
             {isModalOpen && (
                 <div
                     className={`fixed inset-0 bg-black/30 flex justify-end z-50 transition-opacity duration-300 ease-in-out
-                        ${isVisible ? 'opacity-100' : 'opacity-0'} 
-                        overscroll-contain touch-none`} // Evita o scroll do fundo
+              ${isVisible ? 'opacity-100' : 'opacity-0'} 
+              overscroll-contain touch-none`}
                     onClick={closeModal}
                 >
                     <div
-                        className={`bg-white w-80 max-h-full p-6 shadow-lg rounded-l-lg transform transition-transform duration-300 ease-in-out
-                            ${isVisible ? 'translate-x-0' : 'translate-x-full'}`}
+                        className={`bg-white w-150 max-h-full p-6 shadow-lg rounded-l-lg transform transition-transform duration-300 ease-in-out
+                ${isVisible ? 'translate-x-0' : 'translate-x-full'}`}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/* Header do modal */}
+                        {/* Header */}
                         <div className="flex items-center justify-between mb-2">
-                            <Title className="text-lg font-semibold text-gray-800" text="Perfil da Loja" />
-                            {/* Botão fechar (ícone X do Material Icons) */}
-                            <button onClick={closeModal} className="text-gray-500 hover:text-gray-700 text-3xl leading-none flex items-center">
+                            <Title
+                                className="text-lg font-semibold text-gray-800"
+                                text="Perfil da Loja"
+                            />
+                            <button
+                                onClick={closeModal}
+                                className="text-gray-500 hover:text-gray-700 text-3xl leading-none flex items-center"
+                            >
                                 <span className="material-icons-round">close</span>
                             </button>
                         </div>
 
-                        {/* Linha de separação */}
                         <div className="w-16 h-1 bg-gray-200 rounded-full mx-auto mb-6"></div>
 
-                        {/* Conteúdo com scroll suave */}
+                        {/* Conteúdo */}
                         <div className="overflow-y-auto max-h-[calc(100vh-150px)] pr-1 scroll-smooth">
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
-                            <p>Conteúdo do perfil aqui...</p>
+                            {error ? (
+                                <p className="text-red-500">{error}</p>
+                            ) : !data ? (
+                                <p>Carregando...</p>
+                            ) : (
+                                <>
+                                    <p>Nome: {data.client_name}</p>
+                                    <p>Nome da Loja: {data.store}</p>
+                                    <p>Email: {data.client_email}</p>
+                                    <p>Tipo de Loja: {data.store_type}</p>
+
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
             )}
         </div>
     );
-}
+};
 
 export default Ajustes;

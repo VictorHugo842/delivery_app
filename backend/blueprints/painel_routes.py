@@ -16,6 +16,7 @@ import json
 
 painel_api = Blueprint('painel', __name__, url_prefix='/painel')
 
+
 # @painel_api.route('/test_redis2', methods=['GET'])
 # @jwt_required_custom
 # @tenant_required
@@ -27,15 +28,22 @@ painel_api = Blueprint('painel', __name__, url_prefix='/painel')
 #     })
 
 
-
 @painel_api.route("/delivery", methods=["GET"])
 @jwt_required_custom
 @tenant_required
 def delivery():
-    # Obter o ID do usuário autenticado a partir do token
-    user_id = g.usuario_id 
+    user_id = g.usuario_id
 
-    # Buscar o usuário e sua loja correspondente
+    # Verificar se os dados já estão no cache do Redis
+    cache_key = f"delivery_data:{user_id}"
+    cached_data = redis.get(cache_key)
+
+    if cached_data:
+        print("Dados recuperados do cache:", cached_data)
+        # Se houver dados no cache, retornar imediatamente
+        return jsonify(json.loads(cached_data))
+
+    # Caso contrário, consultar o banco de dados
     usuario = UsuarioPainel.query.get(user_id)
     if not usuario:
         return jsonify({"msg": "Usuário não encontrado"}), 404
@@ -44,14 +52,20 @@ def delivery():
     if not loja:
         return jsonify({"msg": "Loja não encontrada"}), 404
 
-    # Retornar os dados da loja e do cliente
-    return jsonify({
+    # Preparar os dados a serem retornados
+    data = {
         "message": "Dados da loja e cliente",
         "store": loja.nome,
         "store_type": loja.tipo_estabelecimento,
         "client_name": usuario.nome,
         "client_email": usuario.email
-    })
+    }
+
+    # Armazenar os dados no cache do Redis com um tempo de expiração de 1 hora (3600 segundos)
+    redis.setex(cache_key, 3600, json.dumps(data))
+    print("Dados armazenados no cache:", data)
+
+    return jsonify(data)
 
 # Registro
 @painel_api.route("/registrar", methods=["POST"])
