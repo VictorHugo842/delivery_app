@@ -6,7 +6,7 @@ import Title from '../../components/title';
 import Image from 'next/image';
 import LinkText from '../../components/link_text';
 import Paragraph from '../../components/paragraph';
-import withAuth from '../../hoc/with_auth'; // Importa o HOC
+import withAuthTenant from '../../hoc/with_auth_tenant'; // Importa o HOC
 
 const Ajustes = () => {
     const [data, setData] = useState<{
@@ -21,7 +21,7 @@ const Ajustes = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
 
-    // Busca os dados da loja
+    // Busca os dados do Estabelecimento
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -122,7 +122,7 @@ const Ajustes = () => {
                         <div className="flex items-center justify-between mb-2">
                             <Title
                                 className="text-lg font-semibold text-gray-800"
-                                text="Perfil da Loja"
+                                text="Perfil do Estabelecimento"
                             />
                             <button
                                 onClick={closeModal}
@@ -143,9 +143,9 @@ const Ajustes = () => {
                             ) : (
                                 <>
                                     <p>Nome: {data.client_name}</p>
-                                    <p>Nome da Loja: {data.store}</p>
+                                    <p>Nome do Estabelecimento: {data.store}</p>
                                     <p>Email: {data.client_email}</p>
-                                    <p>Tipo de Loja: {data.store_type}</p>
+                                    <p>Tipo de Estabelecimento: {data.store_type}</p>
                                 </>
                             )}
                         </div>
@@ -157,4 +157,4 @@ const Ajustes = () => {
 };
 
 // Protege a página usando o HOC
-export default withAuth(Ajustes);
+export default withAuthTenant(Ajustes);

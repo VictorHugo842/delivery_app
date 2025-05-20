@@ -9,6 +9,7 @@ class UsuarioPainel(db.Model):
     telefone = db.Column(db.String(20))
     senha_hash = db.Column(db.Text, nullable=False)
     funcao = db.Column(db.String(20), nullable=False, default='administrador')
-    loja_id = db.Column(db.Integer, db.ForeignKey('loja.id'), nullable=False)
-    loja = db.relationship('Loja', backref=db.backref('usuarios', lazy=True))
     criado_em = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    # Relacionamento com Tenant
+    tenants_list = db.relationship('Tenant', backref='usuario_responsavel', lazy=True)

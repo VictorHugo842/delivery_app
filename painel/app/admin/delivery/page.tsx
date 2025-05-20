@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import { getCookie } from '../../utils/cookies';
-import Paragraph from "../../components/paragraph";
-import Title from "../../components/title";
-import LoadingLine from '../../components/loading_line';
-import withAuth from '../../hoc/with_auth'; //
+import { getCookie } from '@/app/utils/cookies';
+import Paragraph from "@/app/components/paragraph";
+import Title from "@/app/components/title";
+import LoadingLine from '@/app/components/loading_line';
+import { protectRoute } from '@/app/utils/protect_route';
 
 const Delivery = () => {
   const [data, setData] = useState<{
@@ -16,7 +16,10 @@ const Delivery = () => {
     store_type: string;
     client_name: string;
     client_email: string;
+    tenant_id: string;
   } | null>(null);
+
+  const [novaTabela, setNovaTabela] = useState<string | null>(null)
 
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -37,7 +40,7 @@ const Delivery = () => {
     };
 
     fetchData();
-  }, []);
+  }, [router]);
 
   const handleLogout = async () => {
     try {
@@ -99,11 +102,12 @@ const Delivery = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8">
-      <h1 className="text-2xl font-bold mb-4">Loja: {data.store}</h1>
+      <h1 className="text-2xl font-bold mb-4">Estabelecimento: {data.store}</h1>
       <p className="text-lg">Tipo de Estabelecimento: {data.store_type}</p>
       <h2 className="text-xl font-semibold mt-4">Informações do Cliente</h2>
       <p>Nome: {data.client_name}</p>
       <p>Email: {data.client_email}</p>
+      <p>Unidade: {data.tenant_id}</p>
 
       <button
         onClick={handleLogout}
@@ -115,5 +119,4 @@ const Delivery = () => {
   );
 };
 
-// Exporta com proteção
-export default withAuth(Delivery);
+export default Delivery;

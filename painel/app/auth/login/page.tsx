@@ -2,18 +2,18 @@
 
 import { useForm, Controller } from 'react-hook-form';
 import axios from 'axios';
-import { useEffect, useState } from "react";
-import { useRouter } from 'next/navigation'; // Importando o useRouter
+import { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
 import Input from '../../components/input';
 import Button from '../../components/button';
 import Title from '../../components/title';
 import Paragraph from '../../components/paragraph';
-import CheckboxText from '../../components/checkbox_text';
 import LinkText from '../../components/link_text';
 import ContainerForm from '../../components/container_form';
 import LoadingLine from '../../components/loading_line';
+import { checkLogin } from '../../utils/check_login'; // Importando a função utilitária
 
-export default function PaginaLogin() {
+const PaginaLogin = () => {
   const { control, handleSubmit, formState: { errors } } = useForm({
     mode: 'onSubmit',
     defaultValues: {
@@ -23,35 +23,16 @@ export default function PaginaLogin() {
     },
   });
 
-  const [loading, setLoading] = useState(true); // Estado para controlar a tela de redirecionamento
-  const router = useRouter(); // Inicializando o hook useRouter
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
+  // Verifica se o usuário está logado no início
   useEffect(() => {
-    // Função para verificar se o usuário já está logado
-    const checkLogin = async () => {
-      try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/check_auth_tenant`, {
-          withCredentials: true, // precisa para enviar o cookie JWT
-        });
-
-        if (response.status === 200) {
-          // Se está logado, redireciona para /delivery
-          router.push("/admin/delivery");
-        }
-      } catch (error: any) {
-        // Se deu 401 (não logado), não faz nada e continua na página de login
-        if (error.response?.status === 401) {
-          // Usuário não autenticado, pode continuar na página
-          setLoading(false); // Para de carregar quando a verificação termina
-          return;
-        } else {
-          console.error("Erro ao verificar login:", error);
-          setLoading(false); // Para de carregar se houver erro na verificação
-        }
-      }
+    const verifyAuth = async () => {
+      await checkLogin(router, setLoading); // Chama a função de utilitário
     };
 
-    checkLogin();
+    verifyAuth();
   }, [router]);
 
   const onSubmit = async (data: any) => {
@@ -62,18 +43,14 @@ export default function PaginaLogin() {
         `${process.env.NEXT_PUBLIC_API_URL}/painel/login`,
         { email, senha, lembrar_senha: lembrarSenha },
         {
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           withCredentials: true,
         }
       );
 
       console.log('Login bem-sucedido:', response.data);
       alert('Login realizado com sucesso!');
-
-      // Redireciona para a página /delivery após o login bem-sucedido
-      router.push('/admin/delivery');
+      router.push('/auth/unidade');
     } catch (error: any) {
       if (axios.isAxiosError(error)) {
         alert(error.response?.data?.msg || 'Erro ao fazer login');
@@ -136,23 +113,6 @@ export default function PaginaLogin() {
             )}
           />
 
-          {/* Checkbox "Lembrar-me" */}
-          {/* <div className="flex justify-between items-center">
-            <Controller
-              name="lembrarSenha"
-              control={control}
-              render={({ field }) => (
-                <CheckboxText
-                  checked={field.value}
-                  onChange={field.onChange}
-                  label="Lembrar-me"
-                />
-              )}
-            />
-           <LinkText href="/por-rota-pra-redefinir" text="Esqueceu a senha?" className='text-blue-400 text-xs hover:underline' /> 
-          </div> */}
-
-
           <Button type="submit" text="Entrar" />
 
           <div className="text-center text-xs text-slate-700 mt-4">
@@ -164,3 +124,5 @@ export default function PaginaLogin() {
     </div>
   );
 }
+
+export default PaginaLogin;

@@ -12,6 +12,7 @@ import ContainerForm from '../../components/container_form';
 import CheckboxText from '../../components/checkbox_text';
 import LinkText from '../../components/link_text';
 import LoadingLine from '../../components/loading_line';
+import { checkLogin } from '../../utils/check_login'; // Importando a função utilitária
 
 export default function PaginaRegistro() {
 
@@ -21,35 +22,21 @@ export default function PaginaRegistro() {
     const [success, setSuccess] = useState('');
     const router = useRouter();
 
-    useEffect(() => {
-        // Função para verificar se o usuário já está logado
-        const checkLogin = async () => {
-            try {
-                const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/auth/check_auth_tenant`, {
-                    withCredentials: true, // precisa para enviar o cookie JWT
-                });
+    // Estado para armazenar as unidades, definindo explicitamente que será um array de strings
+    const [unidades, setUnidades] = useState<string[]>([]);
+    const [unidadeInput, setUnidadeInput] = useState('');
+    //const [mostrarUnidades, setMostrarUnidades] = useState(false);
 
-                if (response.status === 200) {
-                    // Se está logado, redireciona para /delivery
-                    router.push("/admin/delivery");
-                }
-            } catch (error: any) {
-                // Se deu 401 (não logado), não faz nada e continua na página de login
-                if (error.response?.status === 401) {
-                    // Usuário não autenticado, pode continuar na página
-                    setLoading(false); // Para de carregar quando a verificação termina
-                    return;
-                } else {
-                    console.error("Erro ao verificar login:", error);
-                    setLoading(false); // Para de carregar se houver erro na verificação
-                }
-            }
+    // Verifica se o usuário está logado no início
+    useEffect(() => {
+        const verifyAuth = async () => {
+            await checkLogin(router, setLoading); // Chama a função de utilitário
         };
 
-        checkLogin();
+        verifyAuth();
     }, [router]);
 
-    const { control, handleSubmit, watch, getValues, trigger, formState: { errors } } = useForm({
+    const { control, handleSubmit, watch, getValues, setValue, trigger, formState: { errors } } = useForm({
         defaultValues: {
             nomeUsuario: '',
             email: '',
@@ -57,15 +44,36 @@ export default function PaginaRegistro() {
             integrarWhatsapp: false,
             telefoneWhatsappBusiness: '',
             telefone: '',
-            nomeLoja: '',
+            nomeEstabelecimento: '',
             tipoEstabelecimento: '',
-            faturamentoMensal: '',
             senha: '',
             confirmarSenha: '',
-            modoOperacao: [] as string[]
+            unidades: [] as string[]
         },
     });
     const integrarWhatsapp = watch('integrarWhatsapp');
+
+    // Adicionar unidade
+    const addUnidade = () => {
+        if (unidadeInput.trim() === '') return;
+
+        const novasUnidades = [...unidades, unidadeInput.trim()];
+
+        console.log(novasUnidades);
+        console.log(setValue);
+
+        setUnidades(novasUnidades);
+        setValue('unidades', novasUnidades);
+
+        setUnidadeInput('');
+    };
+
+    // Remover unidade
+    const removeUnidade = (index: number) => {
+        const novasUnidades = unidades.filter((_, i) => i !== index);
+        setUnidades(novasUnidades);
+        setValue('unidades', novasUnidades);
+    };
 
     const camposValidos = [
         "nomeUsuario",
@@ -73,13 +81,12 @@ export default function PaginaRegistro() {
         "documento",
         "telefone",
         "telefoneWhatsappBusiness",
-        "nomeLoja",
+        "nomeEstabelecimento",
         "integrarWhatsapp",
         "tipoEstabelecimento",
-        "faturamentoMensal",
         "senha",
         "confirmarSenha",
-        "modoOperacao"
+        "unidades"
     ] as const;
 
     type CamposValidos = typeof camposValidos[number];
@@ -90,7 +97,7 @@ export default function PaginaRegistro() {
         if (step === 1) {
             camposParaValidar = ["nomeUsuario", "email", "telefone", "documento"];
         } else if (step === 2) {
-            camposParaValidar = ["nomeLoja", "tipoEstabelecimento", "faturamentoMensal", "modoOperacao"];
+            camposParaValidar = ["nomeEstabelecimento", "tipoEstabelecimento", "unidades"];
         }
 
         const valido = await trigger(camposParaValidar);
@@ -122,7 +129,7 @@ export default function PaginaRegistro() {
 
         try {
             const payload = {
-                nome_loja: data.nomeLoja,
+                nome_estabelecimento: data.nomeEstabelecimento,
                 telefone: data.telefone,
                 telefoneWhatsappBusiness: data.telefoneWhatsappBusiness,
                 nome_usuario: data.nomeUsuario,
@@ -130,10 +137,9 @@ export default function PaginaRegistro() {
                 email: data.email,
                 integrarWhatsapp: data.integrarWhatsapp,
                 tipo_estabelecimento: data.tipoEstabelecimento,
-                faturamento_mensal: data.faturamentoMensal,
                 senha: data.senha,
                 confirmar_senha: data.confirmarSenha,
-                modo_operacao: data.modoOperacao,
+                unidades: data.unidades
             };
 
             const response = await axios.post(
@@ -255,10 +261,10 @@ export default function PaginaRegistro() {
                     {step === 2 && (
                         <>
                             <Controller
-                                name="nomeLoja"
+                                name="nomeEstabelecimento"
                                 control={control}
-                                rules={{ required: 'Nome da loja é obrigatório' }}
-                                render={({ field }) => <Input type="text" label="Nome da Loja" placeholder="Digite o nome da loja" {...field} error={errors.nomeLoja} />}
+                                rules={{ required: 'Nome do Estabelecimento é obrigatório' }}
+                                render={({ field }) => <Input type="text" label="Nome do Estabelecimento" placeholder="Digite o nome do Estabelecimento" {...field} error={errors.nomeEstabelecimento} />}
                             />
 
                             <Controller
@@ -290,6 +296,94 @@ export default function PaginaRegistro() {
                                 )}
                             />
 
+
+                            {/*<Paragraph text="Deseja adicionar unidades?" className="font-medium mb-2" /> */}
+
+                            {/* Checkbox para ativar a lista de unidades */}
+                            {/* <CheckboxText
+                                checked={mostrarUnidades}
+                                onChange={() => setMostrarUnidades(!mostrarUnidades)}
+                                label="Sim"
+                                className="mb-4"
+                            /> */}
+
+                            {/* Condicionalmente renderiza a lista de unidades se o checkbox estiver marcado */}
+                            {/* {mostrarUnidades && ( */}
+                            <div className="shadow-sm border border-gray-300 rounded-md p-3">
+                                {/* Bloco do input + botão */}
+                                <div className="flex items-center gap-3">
+                                    {/* Input que cresce */}
+                                    <div className="flex-grow">
+                                        <Controller
+                                            name="unidades"
+                                            control={control}
+                                            rules={{ required: 'É necessário adicionar pelo menos uma unidade' }}
+                                            render={({ field }) => (
+                                                <Input
+                                                    type="text"
+                                                    label="Unidade"
+                                                    placeholder="Digite o nome da unidade"
+                                                    {...field}
+                                                    value={unidadeInput}
+                                                    onChange={(e) => setUnidadeInput(e.target.value)}
+                                                    error={Array.isArray(errors.unidades) ? errors.unidades[0] : errors.unidades}
+                                                    className="w-full"
+                                                />
+                                            )}
+                                        />
+                                    </div>
+
+                                    {/* Botão colado na direita */}
+                                    <button
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            addUnidade();
+                                        }}
+                                        className="bg-blue-500 text-white p-3 rounded-md hover:bg-blue-600 transition flex-shrink-0"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                {/* Lista de unidades */}
+                                <div className="overflow-x-auto mt-0.5">
+                                    <table className="min-w-full table-auto text-sm text-gray-700">
+                                        <thead className="bg-gray-100">
+                                            <tr>
+                                                <th className="px-4 py-2 text-left">Unidade</th>
+                                                <th className="px-4 py-2 text-left">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {unidades.map((unidade, index) => (
+                                                <tr key={index} className="border-b even:bg-gray-50">
+                                                    <td className="px-4 py-2">{unidade}</td>
+                                                    <td className="px-4 py-2">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                removeUnidade(index);
+                                                            }}
+                                                            className="text-red-500 hover:text-red-600"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                            </svg>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {/* )} */}
+
+
+                            {/* 
                             <Paragraph text="Como você trabalha hoje?" className="font-medium mb-2" />
                             <Controller
                                 name="modoOperacao"
@@ -301,46 +395,28 @@ export default function PaginaRegistro() {
                                 render={({ field }) => (
                                     <>
                                         {["Retirada no local", "Entregas delivery", "Emissão de nota fiscal"].map((opcao) => (
-                                            <CheckboxText
-                                                key={opcao}
-                                                checked={field.value.includes(opcao)}
-                                                onChange={() => {
-                                                    const newValue = field.value.includes(opcao)
-                                                        ? field.value.filter((item: string) => item !== opcao)
-                                                        : [...field.value, opcao];
-                                                    field.onChange(newValue);
-                                                }}
-                                                label={opcao}
-                                                className="mb-3"
-                                            />
+                                            <div key={opcao} className="flex items-center space-x-2">
+                                                <input
+                                                    type="checkbox"
+                                                    id={opcao}
+                                                    checked={field.value.includes(opcao)}
+                                                    onChange={() => {
+                                                        const newValue = field.value.includes(opcao)
+                                                            ? field.value.filter((item: string) => item !== opcao)
+                                                            : [...field.value, opcao];
+                                                        field.onChange(newValue);
+                                                    }}
+                                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                                                />
+                                                <label htmlFor={opcao} className="text-sm text-gray-700">{opcao}</label>
+                                            </div>
                                         ))}
                                         {errors.modoOperacao && (
                                             <p className="text-red-600 text-xs">{errors.modoOperacao.message}</p>
                                         )}
                                     </>
                                 )}
-                            />
-
-                            <Controller
-                                name="faturamentoMensal"
-                                control={control}
-                                rules={{ required: 'Faturamento mensal é obrigatório' }}
-                                render={({ field }) => (
-                                    <Input
-                                        label="Faturamento mensal"
-                                        type="select"
-                                        options={[
-                                            { value: 'ate-5000', label: 'até 5 mil' },
-                                            { value: '5000-15000', label: '5 a 15 mil' },
-                                            { value: '15000-30000', label: '15 a 30 mil' },
-                                            { value: '30000-60000', label: '30 a 60 mil' },
-                                            { value: 'mais-60000', label: '+ de 60 mil' },
-                                        ]}
-                                        {...field}
-                                        error={errors.faturamentoMensal}
-                                    />
-                                )}
-                            />
+                            /> */}
                         </>
                     )}
 
@@ -427,4 +503,6 @@ export default function PaginaRegistro() {
             </ContainerForm>
         </div>
     );
-}
+};
+
+

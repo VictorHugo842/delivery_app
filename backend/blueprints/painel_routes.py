@@ -2,7 +2,8 @@ from flask import Blueprint, request, jsonify, g
 from flask_sqlalchemy import SQLAlchemy
 from extensions import db, redis
 from models.usuario_painel import UsuarioPainel
-from models.loja import Loja
+from models.estabelecimento import Estabelecimento
+from models.tenant import Tenant
 from slugify import slugify
 from werkzeug.security import generate_password_hash, check_password_hash  # para segurança de senha
 from decorators.jwt_required_custom import jwt_required_custom
@@ -13,6 +14,7 @@ from flask_jwt_extended import (
     get_csrf_token
 )
 import json
+import traceback 
 
 painel_api = Blueprint('painel', __name__, url_prefix='/painel')
 
@@ -33,39 +35,56 @@ painel_api = Blueprint('painel', __name__, url_prefix='/painel')
 @tenant_required
 def delivery():
     user_id = g.usuario_id
+    tenant_id = g.tenant_id  
+    estabelecimento_id = g.estabelecimento_id  
 
     # Verificar se os dados já estão no cache do Redis
-    cache_key = f"delivery_data:{user_id}"
+    cache_key = f"delivery_data:{user_id}:{tenant_id}"
     cached_data = redis.get(cache_key)
 
     if cached_data:
         print("Dados recuperados do cache:", cached_data)
-        # Se houver dados no cache, retornar imediatamente
         return jsonify(json.loads(cached_data))
 
-    # Caso contrário, consultar o banco de dados
+    # Buscar o tenant e validar
+    tenant = Tenant.query.get(tenant_id)
+    if not tenant:
+        return jsonify({"msg": "Tenant não encontrado"}), 404
+
+    # Validar se o tenant pertence ao usuário logado
+    if tenant.usuario_id != user_id:
+        return jsonify({"msg": "Usuário não autorizado para este tenant"}), 403
+
+    # Validar se o tenant está associado ao estabelecimento correto
+    if tenant.estabelecimento_id != estabelecimento_id:
+        return jsonify({"msg": "Estabelecimento não pertence a este tenant"}), 403
+
+    # Buscar o usuário
     usuario = UsuarioPainel.query.get(user_id)
     if not usuario:
         return jsonify({"msg": "Usuário não encontrado"}), 404
 
-    loja = Loja.query.get(usuario.loja_id)
-    if not loja:
-        return jsonify({"msg": "Loja não encontrada"}), 404
+    # Buscar o estabelecimento
+    estabelecimento = Estabelecimento.query.get(estabelecimento_id)
+    if not estabelecimento:
+        return jsonify({"msg": "Estabelecimento não encontrado"}), 404
 
     # Preparar os dados a serem retornados
     data = {
-        "message": "Dados da loja e cliente",
-        "store": loja.nome,
-        "store_type": loja.tipo_estabelecimento,
+        "message": "Dados do Estabelecimento e cliente",
+        "store": estabelecimento.nome,
+        "store_type": estabelecimento.tipo_estabelecimento,
         "client_name": usuario.nome,
-        "client_email": usuario.email
+        "client_email": usuario.email,
+        "tenant_id": str(tenant_id)  # Garantir string
     }
 
-    # Armazenar os dados no cache do Redis com um tempo de expiração de 1 hora (3600 segundos)
+    # Armazenar os dados no cache do Redis com expiração de 1 hora
     redis.setex(cache_key, 3600, json.dumps(data))
     print("Dados armazenados no cache:", data)
 
     return jsonify(data)
+
 
 # Registro
 @painel_api.route("/registrar", methods=["POST"])
@@ -73,155 +92,149 @@ def registrar_usuario():
     data = request.json
 
     # Extraindo os dados do payload
-    nome_loja = data.get("nome_loja")
+    nome_estabelecimento = data.get("nome_estabelecimento")
     telefone = data.get("telefone")
     telefone_whatsapp_business = data.get("telefoneWhatsappBusiness")
     nome_usuario = data.get("nome_usuario")
     documento = data.get("documento")
+
     email = data.get("email")
     integrar_whatsapp = data.get("integrarWhatsapp", False)
     tipo_estabelecimento = data.get("tipo_estabelecimento")
-    faturamento_mensal = data.get("faturamento_mensal")
     senha = data.get("senha")
     confirmar_senha = data.get("confirmar_senha")
-    modo_operacao = data.get("modo_operacao")
+    unidades = data.get("unidades", [])
 
-    # Validação de campos obrigatórios
-    if not all([nome_loja, telefone, nome_usuario, documento, email, senha, tipo_estabelecimento, confirmar_senha, modo_operacao, faturamento_mensal]):
+    if not all([nome_estabelecimento, telefone, nome_usuario, documento, email, senha, tipo_estabelecimento, confirmar_senha, unidades]):
         return jsonify({"msg": "Preencha todos os campos obrigatórios"}), 400
 
     if senha != confirmar_senha:
         return jsonify({"msg": "As senhas não coincidem"}), 400
 
-    # Verificar se o email já está cadastrado
+    # Verificar se o email ou documento já estão cadastrados
     if UsuarioPainel.query.filter_by(email=email).first():
         return jsonify({"msg": "Email já cadastrado"}), 409
-    
-    # Verificar se o documento já está cadastrado
     if UsuarioPainel.query.filter_by(documento=documento).first():
         return jsonify({"msg": "Documento já cadastrado"}), 409
-    
-    # Verificar se o nome da loja já está cadastrado
-    if Loja.query.filter_by(nome=nome_loja).first():
-        return jsonify({"msg": "Nome da loja já cadastrado"}), 409
+    if Estabelecimento.query.filter_by(nome=nome_estabelecimento).first():
+        return jsonify({"msg": "Nome do Estabelecimento já cadastrado"}), 409
 
-    # Verificar se o slug da loja já existe
-    slug_loja = slugify(nome_loja)
-    if Loja.query.filter_by(slug=slug_loja).first():
-        return jsonify({"msg": "Slug já usado"}), 409
-
-      # Criar a loja
+    # Criar o estabelecimento
     try:
-        loja = Loja(
-            nome=data.get("nome_loja"),
-            telefone_whatsapp_business=data.get("telefoneWhatsappBusiness"),
-            tipo_estabelecimento=data.get("tipo_estabelecimento"),
-            faturamento_mensal=data.get("faturamento_mensal"),
-            integrar_whatsapp=data.get("integrarWhatsapp", False),
-            modo_operacao=data.get("modo_operacao"),
-            slug=slug_loja
+        estabelecimento = Estabelecimento(
+            nome=nome_estabelecimento,
+            telefone_whatsapp_business=telefone_whatsapp_business,
+            tipo_estabelecimento=tipo_estabelecimento,
+            integrar_whatsapp=integrar_whatsapp,
         )
-        db.session.add(loja)
+        db.session.add(estabelecimento)
         db.session.commit()
     except Exception as e:
-        return jsonify({"msg": "Erro ao criar a loja", "error": str(e)}), 500
+        return jsonify({"msg": "Erro ao criar o estabelecimento", "error": str(e)}), 500
 
     # Hash da senha
-    senha_hash = generate_password_hash(data.get("senha"))
+    senha_hash = generate_password_hash(senha)
 
     # Criar o usuário
     try:
         usuario = UsuarioPainel(
-            documento=data.get("documento"),
-            nome=data.get("nome_usuario"),
-            telefone=data.get("telefone"),  
-            funcao="administrador",  # Definindo a função como administrador
-            email=data.get("email"),
-            senha_hash=senha_hash,
-            loja_id=loja.id  # Relacionando o usuário à loja
+            documento=documento,
+            nome=nome_usuario,
+            telefone=telefone,
+            funcao="administrador",
+            email=email,
+            senha_hash=senha_hash
         )
         db.session.add(usuario)
         db.session.commit()
     except Exception as e:
         return jsonify({"msg": "Erro ao criar o usuário", "error": str(e)}), 500
 
-    # Gerar o access_token
+    # Criar os Tenants
+    tenants = []
     try:
-        
-        # Criar um dicionário com as informações
-        identity = {
-            "usuario_id": usuario.id,
-            "loja_id": usuario.loja_id
-        }
-        
-        # Serializar o dicionário para uma string
-        identity_string = json.dumps(identity)
-        
-        # Gerar o token
+        for unidade in unidades:
+            slug_tenant = f"{unidade.replace(' ', '-')}"
+            tenant = Tenant(
+                estabelecimento_id=estabelecimento.id,
+                usuario_id=usuario.id,
+                slug=slug_tenant,
+            )
+            db.session.add(tenant)
+            tenants.append(tenant)
+        db.session.commit()
+    except Exception as e:
+        return jsonify({"msg": "Erro ao criar os tenants", "error": str(e)}), 500
+
+    # Gerar o token com os tenants
+    identity = {
+        "usuario_id": usuario.id,
+        "estabelecimento_id": estabelecimento.id,
+        "tenants": [tenant.id for tenant in tenants],  # Armazenando os tenants no identity
+        "tenant_id":"" # só manda o tenant pela set_tenant
+    }
+
+    identity_string = json.dumps(identity)
+
+    try:
         access_token = create_access_token(identity=identity_string, fresh=True)
-        print("Access Token:", access_token)
     except Exception as e:
         return jsonify({"msg": "Erro ao gerar o access token", "error": str(e)}), 500
 
-    # Responder com o token
-    response = jsonify({"msg": "Usuário e loja registrados com sucesso"})
+    response = jsonify({"msg": "Usuário, Estabelecimento e Tenants registrados com sucesso"})
     set_access_cookies(response, access_token)
 
     return response, 201
 
-######################################################################
-# USAR LIMITER PRA LIMITAR O NÚMERO DE TENTATIVAS DE LOGIN E REGISTRO
-######################################################################
 
 @painel_api.route("/login", methods=["POST"])
 def login_usuario():
     data = request.json
-
     email = data.get("email")
     senha = data.get("senha")
 
     if not email or not senha:
         return jsonify({"msg": "Preencha email e senha"}), 400
 
-    # Buscar o usuário pelo email
     usuario = UsuarioPainel.query.filter_by(email=email).first()
-
     if not usuario or not check_password_hash(usuario.senha_hash, senha):
         return jsonify({"msg": "Email ou senha inválidos"}), 401
+
+    tenants = Tenant.query.filter_by(usuario_id=usuario.id).all()
+
+    if not tenants:
+        return jsonify({"msg": "Usuário não vinculado a nenhum tenant"}), 404
 
     # Criar o dicionário de identidade
     identity = {
         "usuario_id": usuario.id,
-        "loja_id": usuario.loja_id
+        "estabelecimento_id": tenants[0].estabelecimento_id,  # Pegando o estabelecimento do primeiro tenant
+        "tenants": [tenant.id for tenant in tenants],
+        "tenant_id": ""
     }
 
-    # Serializar o dicionário para uma string
     identity_string = json.dumps(identity)
 
-    # Gerar o token
     try:
         access_token = create_access_token(identity=identity_string, fresh=True)
-
     except Exception as e:
         return jsonify({"msg": "Erro ao gerar o access token", "error": str(e)}), 500
 
     response = jsonify({"msg": "Login realizado com sucesso"})
     set_access_cookies(response, access_token)
-   
+
     return response, 200
 
 
-@painel_api.route("/logout", methods=["POST"])
+@painel_api.route("/logout", methods=["POST","GET"])
 @jwt_required_custom
-@tenant_required
 def logout_usuario():
     response = jsonify({"msg": "Logout realizado com sucesso"})
 
-    # Limpar cookies de autenticação
+    # Limpa cookies de autenticação
     try:
         unset_jwt_cookies(response)
     except Exception as e:
         return jsonify({"msg": "Erro ao limpar cookies", "error": str(e)}), 500
 
     return response, 200
-

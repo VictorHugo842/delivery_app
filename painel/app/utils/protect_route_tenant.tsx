@@ -1,12 +1,12 @@
 import axios from 'axios';
 import { getCookie } from './cookies';
 
-export const protectRoute = async (router: any) => {
+export const protectRouteTenant = async (router: any) => {
     try {
         const csrfToken = getCookie('csrf_access_token');
 
         await axios.post(
-            `${process.env.NEXT_PUBLIC_API_URL}/auth/check_auth`,
+            `${process.env.NEXT_PUBLIC_API_URL}/auth/check_auth_tenant`,
             {},
             {
                 withCredentials: true,
@@ -19,10 +19,11 @@ export const protectRoute = async (router: any) => {
         const errorMessage = 'Você não tem permissão para acessar esta página.';
         const statusCode = err?.response?.status || 500; // Pega o status ou assume 500
         const errorDetails = err?.response?.data?.msg || err.message;
+
         // Envia o log, mas não espera por ele
         axios
             .post(`${process.env.NEXT_PUBLIC_API_URL}/logs/log_error`, {
-                message: 'Erro de autenticação JWT (Rota Protegida)',
+                message: 'Erro de autenticação JWT e Tenant_ID (Rota Protegida)',
                 details: errorDetails,
             })
             .catch((logErr) => {
@@ -37,6 +38,6 @@ export const protectRoute = async (router: any) => {
         // Redireciona para tela de login
         router.push('/auth/login');
 
-        throw new Error('Simulating authentication failure');
+        throw new Error(errorDetails);
     }
 };

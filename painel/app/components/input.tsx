@@ -12,9 +12,9 @@ interface InputProps {
     options?: { value: string; label: string }[];
     onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
     onBlur?: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => void;
-    value?: string;
+    value?: string | string[]; // Modificado para aceitar string ou string[]
     name?: string;
-    error?: FieldError;
+    error?: FieldError | undefined;  // Corrigido para aceitar FieldError diretamente
 }
 
 export default function Input({
@@ -32,6 +32,15 @@ export default function Input({
     name,
     error,
 }: InputProps) {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        if (Array.isArray(value)) {
+            const newValue = e.target.value.split(',').map((item) => item.trim());
+            onChange && onChange({ target: { value: newValue.join(', ') } } as any); // Passa como string novamente
+        } else {
+            onChange && onChange(e);
+        }
+    };
+
     return (
         <div className="mb-4">
             {label && (
@@ -47,8 +56,7 @@ export default function Input({
                     onChange={onChange}
                     onBlur={onBlur}
                     value={value}
-                    className={`w-full text-sm text-slate-800 border ${error ? 'border-red-500' : 'border-slate-300'
-                        } pl-4 pr-4 py-3 rounded-md focus:outline-none focus:ring-0 ${className}`}
+                    className={`w-full text-sm text-slate-800 border ${error ? 'border-red-500' : 'border-slate-300'} pl-4 pr-4 py-3 rounded-md shadow-sm focus:outline-none focus:ring-0 ${className}`}
                 >
                     <option value="" disabled>
                         Selecione uma opção
@@ -68,17 +76,14 @@ export default function Input({
                     maxLength={maxLength}
                     style={maxHeight ? { maxHeight } : undefined}
                     onClick={onClick}
-                    onChange={onChange}
+                    onChange={handleChange}
                     onBlur={onBlur}
-                    value={value}
-                    className={`w-full text-sm text-slate-800 border ${error ? 'border-red-500' : 'border-slate-300'
-                        } pl-4 pr-4 py-3 rounded-md focus:outline-none focus:ring-0 ${className}`}
+                    value={Array.isArray(value) ? value.join(', ') : value} // Se for array, exibe como string
+                    className={`w-full text-sm text-slate-800 border ${error ? 'border-[#eb445f]' : 'border-slate-300'} pl-4 pr-4 py-3 rounded-md shadow-sm focus:outline-none focus:ring-0 ${className}`}
                 />
             )}
 
-            {error && (
-                <p className="text-[#ea1d2c] text-xs mt-1">{error.message}</p>
-            )}
+            {error && <p className="text-[#ea1d2c] text-xs mt-1">{error.message}</p>}
         </div>
     );
 }
