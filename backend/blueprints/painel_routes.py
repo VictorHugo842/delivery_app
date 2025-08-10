@@ -14,10 +14,14 @@ from flask_jwt_extended import (
     get_csrf_token
 )
 import json
-import traceback 
+import os
+from werkzeug.utils import secure_filename
+from datetime import datetime
 
 painel_api = Blueprint('painel', __name__, url_prefix='/painel')
 
+UPLOAD_FOLDER = 'uploads/logos' 
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # @painel_api.route('/test_redis2', methods=['GET'])
 # @jwt_required_custom
@@ -86,32 +90,49 @@ def delivery():
     return jsonify(data)
 
 
-# Registro
 @painel_api.route("/registrar", methods=["POST"])
 def registrar_usuario():
-    data = request.json
+    data = request.form
+    files = request.files
 
-    # Extraindo os dados do payload
+    # Dados principais
     nome_estabelecimento = data.get("nome_estabelecimento")
     telefone = data.get("telefone")
     telefone_whatsapp_business = data.get("telefoneWhatsappBusiness")
     nome_usuario = data.get("nome_usuario")
     documento = data.get("documento")
-
     email = data.get("email")
-    integrar_whatsapp = data.get("integrarWhatsapp", False)
+    integrar_whatsapp = data.get("integrarWhatsapp", "false").lower() == "true"
     tipo_estabelecimento = data.get("tipo_estabelecimento")
     senha = data.get("senha")
     confirmar_senha = data.get("confirmar_senha")
-    unidades = data.get("unidades", [])
 
-    if not all([nome_estabelecimento, telefone, nome_usuario, documento, email, senha, tipo_estabelecimento, confirmar_senha, unidades]):
+    # Extrair unidades manualmente do formData
+    unidades = []
+    index = 0
+    while True:
+        nome_unidade = data.get(f'unidades[{index}][nome]')
+        logo_unidade = files.get(f'unidades[{index}][logo]')
+        if nome_unidade is None:
+            break  # Quando acabar, para
+
+        unidades.append({
+            "nome": nome_unidade,
+            "logo": logo_unidade
+        })
+        index += 1
+
+    print(data)
+    print(files)
+    print(unidades)
+
+    if not all([nome_estabelecimento, telefone, nome_usuario, documento, email, senha, tipo_estabelecimento, confirmar_senha]) or not unidades:
         return jsonify({"msg": "Preencha todos os campos obrigatórios"}), 400
 
     if senha != confirmar_senha:
         return jsonify({"msg": "As senhas não coincidem"}), 400
 
-    # Verificar se o email ou documento já estão cadastrados
+    # Verificações
     if UsuarioPainel.query.filter_by(email=email).first():
         return jsonify({"msg": "Email já cadastrado"}), 409
     if UsuarioPainel.query.filter_by(documento=documento).first():
@@ -119,7 +140,7 @@ def registrar_usuario():
     if Estabelecimento.query.filter_by(nome=nome_estabelecimento).first():
         return jsonify({"msg": "Nome do Estabelecimento já cadastrado"}), 409
 
-    # Criar o estabelecimento
+    # Criar Estabelecimento
     try:
         estabelecimento = Estabelecimento(
             nome=nome_estabelecimento,
@@ -132,11 +153,9 @@ def registrar_usuario():
     except Exception as e:
         return jsonify({"msg": "Erro ao criar o estabelecimento", "error": str(e)}), 500
 
-    # Hash da senha
-    senha_hash = generate_password_hash(senha)
-
-    # Criar o usuário
+    # Criar usuário
     try:
+        senha_hash = generate_password_hash(senha)
         usuario = UsuarioPainel(
             documento=documento,
             nome=nome_usuario,
@@ -148,30 +167,52 @@ def registrar_usuario():
         db.session.add(usuario)
         db.session.commit()
     except Exception as e:
+        print(e)
         return jsonify({"msg": "Erro ao criar o usuário", "error": str(e)}), 500
-
-    # Criar os Tenants
+    
+    # Criar tenants com logo salva no disco
     tenants = []
     try:
-        for unidade in unidades:
-            slug_tenant = f"{unidade.replace(' ', '-')}"
+        for index, unidade in enumerate(unidades):
+            nome_unidade = unidade["nome"]
+            slug_tenant = nome_unidade.lower().replace(' ', '_')
+
+            logo_file = unidade.get("logo")
+            logo_path = None
+
+            if logo_file:
+                filename = secure_filename(logo_file.filename)
+                timestamp = int(datetime.now().timestamp())
+                filename = f"{slug_tenant}_{timestamp}_{filename}"
+
+                full_path = os.path.join(UPLOAD_FOLDER, filename)
+                logo_file.save(full_path)
+
+                # Salva o caminho relativo para o banco (exemplo: 'uploads/logos/arquivo.png')
+                logo_path = full_path
+
             tenant = Tenant(
                 estabelecimento_id=estabelecimento.id,
                 usuario_id=usuario.id,
                 slug=slug_tenant,
+                logo_path=logo_path  # caminho do arquivo no banco
             )
             db.session.add(tenant)
             tenants.append(tenant)
+
         db.session.commit()
     except Exception as e:
-        return jsonify({"msg": "Erro ao criar os tenants", "error": str(e)}), 500
+        db.session.rollback()
+        print(e)
+        return jsonify({"msg": "Erro ao salvar tenants", "detalhes": str(e)}), 500
 
-    # Gerar o token com os tenants
+
+    # Gerar token
     identity = {
         "usuario_id": usuario.id,
         "estabelecimento_id": estabelecimento.id,
-        "tenants": [tenant.id for tenant in tenants],  # Armazenando os tenants no identity
-        "tenant_id":"" # só manda o tenant pela set_tenant
+        "tenants": [tenant.id for tenant in tenants],
+        "tenant_id": ""
     }
 
     identity_string = json.dumps(identity)
@@ -183,7 +224,6 @@ def registrar_usuario():
 
     response = jsonify({"msg": "Usuário, Estabelecimento e Tenants registrados com sucesso"})
     set_access_cookies(response, access_token)
-
     return response, 201
 
 

@@ -13,6 +13,7 @@ import CheckboxText from '../../components/checkbox_text';
 import LinkText from '../../components/link_text';
 import LoadingLine from '../../components/loading_line';
 import { checkLogin } from '../../utils/check_login'; // Importando a função utilitária
+import React from 'react';
 
 export default function PaginaRegistro() {
 
@@ -26,6 +27,10 @@ export default function PaginaRegistro() {
     const [unidades, setUnidades] = useState<string[]>([]);
     const [unidadeInput, setUnidadeInput] = useState('');
     //const [mostrarUnidades, setMostrarUnidades] = useState(false);
+
+    const [arquivosUnidades, setArquivosUnidades] = React.useState<{ file: File | null; preview: string | null }[]>([]);
+
+
 
     // Verifica se o usuário está logado no início
     useEffect(() => {
@@ -126,48 +131,55 @@ export default function PaginaRegistro() {
     const onSubmit = async (data: any) => {
         setError('');
         setSuccess('');
-
+    
         try {
-            const payload = {
-                nome_estabelecimento: data.nomeEstabelecimento,
-                telefone: data.telefone,
-                telefoneWhatsappBusiness: data.telefoneWhatsappBusiness,
-                nome_usuario: data.nomeUsuario,
-                documento: data.documento,
-                email: data.email,
-                integrarWhatsapp: data.integrarWhatsapp,
-                tipo_estabelecimento: data.tipoEstabelecimento,
-                senha: data.senha,
-                confirmar_senha: data.confirmarSenha,
-                unidades: data.unidades
-            };
-
+            const formData = new FormData();
+    
+            // Dados principais
+            formData.append('nome_estabelecimento', data.nomeEstabelecimento);
+            formData.append('telefone', data.telefone);
+            formData.append('telefoneWhatsappBusiness', data.telefoneWhatsappBusiness);
+            formData.append('nome_usuario', data.nomeUsuario);
+            formData.append('documento', data.documento);
+            formData.append('email', data.email);
+            formData.append('integrarWhatsapp', data.integrarWhatsapp);
+            formData.append('tipo_estabelecimento', data.tipoEstabelecimento);
+            formData.append('senha', data.senha);
+            formData.append('confirmar_senha', data.confirmarSenha);
+    
+            // Unidades + Logos
+            if (Array.isArray(data.unidades)) {
+                data.unidades.forEach((unidadeNome: string, index: number) => {
+                    formData.append(`unidades[${index}][nome]`, unidadeNome);
+    
+                    const logoFile = arquivosUnidades[index]?.file;
+                    if (logoFile) {
+                        formData.append(`unidades[${index}][logo]`, logoFile);
+                    }
+                });
+            }
+    
             const response = await axios.post(
                 `${process.env.NEXT_PUBLIC_API_URL}/painel/registrar`,
-                payload,
+                formData,
                 {
-                    headers: { 'Content-Type': 'application/json' },
                     withCredentials: true,
                 }
             );
-
-            // Sucesso no registro
+    
             setSuccess('Registro realizado com sucesso!');
             console.log('Registro bem-sucedido:', response.data);
-
-            router.push('/admin/delivery');  // Redireciona após o sucesso
+    
+            router.push('/admin/delivery');
         } catch (error: any) {
             if (axios.isAxiosError(error)) {
-                // Logar informações completas sobre o erro de Axios
-                console.log('Erro de Axios:', error); // Loga o erro completo
+                console.log('Erro de Axios:', error);
                 setError(error.response?.data?.msg || 'Erro ao registrar usuário');
-                console.log('Erro ao registrar usuário:', error.response?.data);
             } else {
-                console.log('Erro inesperado:', error); // Loga o erro completo
+                console.log('Erro inesperado:', error);
                 setError('Erro inesperado: ' + error.message);
             }
         }
-
     };
 
     if (loading) {
@@ -260,6 +272,7 @@ export default function PaginaRegistro() {
                     {/* Etapa 2 */}
                     {step === 2 && (
                         <>
+                            {/* Seus inputs existentes */}
                             <Controller
                                 name="nomeEstabelecimento"
                                 control={control}
@@ -278,17 +291,7 @@ export default function PaginaRegistro() {
                                         options={[
                                             { value: 'restaurante', label: 'Restaurante' },
                                             { value: 'lanchonete', label: 'Lanchonete' },
-                                            { value: 'hamburgueria', label: 'Hamburgueria' },
-                                            { value: 'doceria', label: 'Doceria' },
-                                            { value: 'acaiteria', label: 'Açaiteria' },
-                                            { value: 'pizzaria', label: 'Pizzaria' },
-                                            { value: 'bar / petiscaria', label: 'Bar / Petiscaria' },
-                                            { value: 'saladeria', label: 'Saladeria' },
-                                            { value: 'distribuidora de bebidas', label: 'Distribuidora de Bebidas' },
-                                            { value: 'padaria', label: 'Padaria' },
-                                            { value: 'cafeteria', label: 'Cafeteria' },
-                                            { value: 'sorveteria', label: 'Sorveteria' },
-                                            { value: 'comida oriental', label: 'Comida Oriental' },
+                                            // ...
                                         ]}
                                         {...field}
                                         error={errors.tipoEstabelecimento}
@@ -296,48 +299,35 @@ export default function PaginaRegistro() {
                                 )}
                             />
 
-
-                            {/*<Paragraph text="Deseja adicionar unidades?" className="font-medium mb-2" /> */}
-
-                            {/* Checkbox para ativar a lista de unidades */}
-                            {/* <CheckboxText
-                                checked={mostrarUnidades}
-                                onChange={() => setMostrarUnidades(!mostrarUnidades)}
-                                label="Sim"
-                                className="mb-4"
-                            /> */}
-
-                            {/* Condicionalmente renderiza a lista de unidades se o checkbox estiver marcado */}
-                            {/* {mostrarUnidades && ( */}
                             <div className="shadow-sm border border-gray-300 rounded-md p-3">
-                                {/* Bloco do input + botão */}
                                 <div className="flex items-center gap-3">
-                                    {/* Input que cresce */}
                                     <div className="flex-grow">
                                         <Controller
                                             name="unidades"
                                             control={control}
                                             rules={{ required: 'É necessário adicionar pelo menos uma unidade' }}
-                                            render={({ field }) => (
+                                            render={() => (
                                                 <Input
                                                     type="text"
                                                     label="Unidade"
                                                     placeholder="Digite o nome da unidade"
-                                                    {...field}
                                                     value={unidadeInput}
                                                     onChange={(e) => setUnidadeInput(e.target.value)}
-                                                    error={Array.isArray(errors.unidades) ? errors.unidades[0] : errors.unidades}
                                                     className="w-full"
+                                                    error={Array.isArray(errors.unidades) ? errors.unidades[0] : errors.unidades}
                                                 />
                                             )}
                                         />
                                     </div>
 
-                                    {/* Botão colado na direita */}
                                     <button
                                         onClick={(e) => {
                                             e.preventDefault();
+                                            if (unidadeInput.trim() === '') return; // opcional: evita adicionar vazio
                                             addUnidade();
+                                            // adicionar um espaço para o arquivo da unidade nova
+                                            setArquivosUnidades((prev) => [...prev, { file: null, preview: null }]);
+                                            setUnidadeInput('');
                                         }}
                                         className="bg-blue-500 text-white p-3 rounded-md hover:bg-blue-600 transition flex-shrink-0"
                                     >
@@ -347,12 +337,12 @@ export default function PaginaRegistro() {
                                     </button>
                                 </div>
 
-                                {/* Lista de unidades */}
                                 <div className="overflow-x-auto mt-0.5">
                                     <table className="min-w-full table-auto text-sm text-gray-700">
                                         <thead className="bg-gray-100">
                                             <tr>
                                                 <th className="px-4 py-2 text-left">Unidade</th>
+                                                <th className="px-4 py-2 text-left">Logo / Anexo</th>
                                                 <th className="px-4 py-2 text-left">Ações</th>
                                             </tr>
                                         </thead>
@@ -361,10 +351,43 @@ export default function PaginaRegistro() {
                                                 <tr key={index} className="border-b even:bg-gray-50">
                                                     <td className="px-4 py-2">{unidade}</td>
                                                     <td className="px-4 py-2">
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={(e) => {
+                                                                const file = e.target.files?.[0] || null;
+                                                                const reader = new FileReader();
+                                                                reader.onloadend = () => {
+                                                                    setArquivosUnidades((prev) => {
+                                                                        const newArr = [...prev];
+                                                                        newArr[index] = { file, preview: reader.result as string };
+                                                                        return newArr;
+                                                                    });
+                                                                };
+                                                                if (file) reader.readAsDataURL(file);
+                                                                else {
+                                                                    setArquivosUnidades((prev) => {
+                                                                        const newArr = [...prev];
+                                                                        newArr[index] = { file: null, preview: null };
+                                                                        return newArr;
+                                                                    });
+                                                                }
+                                                            }}
+                                                        />
+                                                        {arquivosUnidades[index]?.preview && (
+                                                            <img src={arquivosUnidades[index].preview!} alt={`Preview da unidade ${unidade}`} className="max-w-xs mt-2" />
+                                                        )}
+                                                    </td>
+                                                    <td className="px-4 py-2">
                                                         <button
                                                             onClick={(e) => {
                                                                 e.preventDefault();
                                                                 removeUnidade(index);
+                                                                setArquivosUnidades((prev) => {
+                                                                    const newArr = [...prev];
+                                                                    newArr.splice(index, 1);
+                                                                    return newArr;
+                                                                });
                                                             }}
                                                             className="text-red-500 hover:text-red-600"
                                                         >
@@ -379,44 +402,6 @@ export default function PaginaRegistro() {
                                     </table>
                                 </div>
                             </div>
-
-                            {/* )} */}
-
-
-                            {/* 
-                            <Paragraph text="Como você trabalha hoje?" className="font-medium mb-2" />
-                            <Controller
-                                name="modoOperacao"
-                                control={control}
-                                rules={{
-                                    validate: (value) => value.length > 0 || 'Selecione pelo menos uma opção',
-                                }}
-                                defaultValue={[]}
-                                render={({ field }) => (
-                                    <>
-                                        {["Retirada no local", "Entregas delivery", "Emissão de nota fiscal"].map((opcao) => (
-                                            <div key={opcao} className="flex items-center space-x-2">
-                                                <input
-                                                    type="checkbox"
-                                                    id={opcao}
-                                                    checked={field.value.includes(opcao)}
-                                                    onChange={() => {
-                                                        const newValue = field.value.includes(opcao)
-                                                            ? field.value.filter((item: string) => item !== opcao)
-                                                            : [...field.value, opcao];
-                                                        field.onChange(newValue);
-                                                    }}
-                                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-                                                />
-                                                <label htmlFor={opcao} className="text-sm text-gray-700">{opcao}</label>
-                                            </div>
-                                        ))}
-                                        {errors.modoOperacao && (
-                                            <p className="text-red-600 text-xs">{errors.modoOperacao.message}</p>
-                                        )}
-                                    </>
-                                )}
-                            /> */}
                         </>
                     )}
 

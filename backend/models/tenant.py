@@ -6,6 +6,7 @@ class Tenant(db.Model):
     estabelecimento_id = db.Column(db.Integer, db.ForeignKey('estabelecimento.id'), nullable=False)
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario_painel.id'), nullable=False)
     slug = db.Column(db.String(100), unique=True, nullable=False)
+    logo_path = db.Column(db.String(255)) 
     data_ativacao = db.Column(db.DateTime)
     data_expiracao = db.Column(db.DateTime)
     status = db.Column(db.String(20), default='ativo') 
